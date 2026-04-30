@@ -32,10 +32,11 @@ set(SOURCE_FILES
 
 add_executable(3dAudioVisualizer ${SOURCE_FILES})
 
-add_compile_definitions(JUCE_USE_CURL=0)
+add_compile_definitions(JUCE_USE_CURL=0 JUCE_USE_MP3AUDIOFORMAT=1)
 
-target_link_libraries(3dAudioVisualizer PRIVATE 
+target_link_libraries(3dAudioVisualizer PRIVATE
     juce::juce_audio_devices
+    juce::juce_audio_formats
     juce::juce_core
     glfw
     glm::glm

@@ -22,13 +22,7 @@ struct AudioEngine : public juce::AudioIODeviceCallback {
     void audioDeviceAboutToStart(juce::AudioIODevice* d) override { sr = d->getCurrentSampleRate(); }
     void audioDeviceStopped() override {}
 
-    void audioDeviceIOCallbackWithContext(const float* const* inputChannelData,
-                                          int numInputChannels,
-                                          float* const* outputChannelData,
-                                          int numOutputChannels,
-                                          int numSamples,
-                                          const juce::AudioIODeviceCallbackContext&) override
-    {
+    void audioDeviceIOCallbackWithContext(const float* const* inputChannelData, int numInputChannels, float* const* outputChannelData, int numOutputChannels, int numSamples, const juce::AudioIODeviceCallbackContext&) override {
         float sum = 0.0f;
         for (int i = 0; i < numSamples; ++i) {
             double s = std::sin(phase);

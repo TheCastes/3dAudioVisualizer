@@ -25,6 +25,9 @@ target_link_libraries(glad PRIVATE ${CMAKE_DL_LIBS})
 set(SOURCE_FILES
     src/main.cpp
     include/audio/AudioEngine.h
+    include/renderer/Renderer.h
+    src/audio/AudioEngine.cpp
+    src/renderer/Renderer.cpp
 )
 
 add_executable(3dAudioVisualizer ${SOURCE_FILES})

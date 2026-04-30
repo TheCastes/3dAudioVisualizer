@@ -25,8 +25,12 @@ void AudioEngine::audioDeviceIOCallbackWithContext(const float* const* inputChan
     g_audioLevel.store(std::sqrt(sum / numSamples), std::memory_order_relaxed);
 }
 
-std::atomic<float>& AudioEngine::getAudioLevel() { return g_audioLevel; }
-std::atomic<bool>& AudioEngine::getAudioReady() { return g_audioReady; }
+std::atomic<float>& AudioEngine::getAudioLevel() { 
+    return g_audioLevel; 
+}
+std::atomic<bool>& AudioEngine::getAudioReady() {
+    return g_audioReady; 
+}
 
 void AudioEngine::runInBackground() {
     juce::ScopedJuceInitialiser_GUI juceInit;

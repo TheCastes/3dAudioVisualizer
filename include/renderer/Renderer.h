@@ -13,4 +13,8 @@ public:
     static void render();
     static float getAudioLevel();
     static GLFWwindow* getWindow();
+private:
+    bool buffersReady = false;
+    static GLuint loadShader(const char* s, int type);
+    static void createBuffers(float verts[]);
 };

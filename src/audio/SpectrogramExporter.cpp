@@ -62,12 +62,12 @@ void writePPM(const std::string& path, int W, int H, F getValue) {
 
 // Sink for STFTProcessor that accumulates every frame into a vector.
 struct FrameAccumulator {
-    static constexpr int kNumBins = 512; // matches STFTProcessor::kNumBins
-    std::vector<std::array<float, kNumBins>> frames;
+    static constexpr int numFrequencyBins = 512; // matches STFTProcessor::numFrequencyBins
+    std::vector<std::array<float, numFrequencyBins>> frames;
 
     void pushFrame(const float* bins) {
         frames.emplace_back();
-        std::copy(bins, bins + kNumBins, frames.back().data());
+        std::copy(bins, bins + numFrequencyBins, frames.back().data());
     }
 };
 
@@ -84,12 +84,12 @@ void SpectrogramExporter::exportPPM(const SpectrogramBuffer& buf, const std::str
         return;
     }
 
-    const int n = std::min(numFrames, SpectrogramBuffer::kMaxFrames);
-    std::vector<std::array<float, SpectrogramBuffer::kNumBins>> snapshot(n);
+    const int n = std::min(numFrames, SpectrogramBuffer::maxFrames);
+    std::vector<std::array<float, SpectrogramBuffer::numFrequencyBins> > snapshot(n);
     buf.getSnapshot(
-        reinterpret_cast<float(*)[SpectrogramBuffer::kNumBins]>(snapshot.data()), n);
+        reinterpret_cast<float(*)[SpectrogramBuffer::numFrequencyBins]>(snapshot.data()), n);
 
-    writePPM(path, n, SpectrogramBuffer::kNumBins,
+    writePPM(path, n, SpectrogramBuffer::numFrequencyBins,
              [&](int col, int row) { return snapshot[col][row]; });
 }
 
@@ -137,7 +137,7 @@ void SpectrogramExporter::exportFullTrack(const std::string& audioPath, const st
     }
 
     const int W = static_cast<int>(acc.frames.size());
-    constexpr int H = FrameAccumulator::kNumBins;
+    constexpr int H = FrameAccumulator::numFrequencyBins;
     writePPM(outPath, W, H,
              [&](int col, int row) { return acc.frames[col][row]; });
 }

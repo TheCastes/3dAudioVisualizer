@@ -7,55 +7,56 @@
 template<typename Sink>
 class STFTProcessor {
 public:
-    static constexpr int kFftOrder = 10;
-    static constexpr int kFftSize  = 1 << kFftOrder; // 1024
-    static constexpr int kHopSize  = kFftSize / 2;   // 512 (50% overlap)
-    static constexpr int kNumBins  = kFftSize / 2;   // 512 (positive freqs)
+    static constexpr int fftOrder = 10;
+    static constexpr int fftSize  = 1 << fftOrder; // 1024
+    static constexpr int hopSize  = fftSize / 2;   // 512 (50% overlap)
+    static constexpr int numFrequencyBins  = fftSize / 2;   // 512 (positive freqs)
 
-    explicit STFTProcessor(Sink& sink) : fft_(kFftOrder), sink_(sink) {
-        for (int i = 0; i < kFftSize; ++i)
-            window_[i] = 0.5f * (1.0f - std::cos(2.0f * float(M_PI) * i / (kFftSize - 1)));
+    explicit STFTProcessor(Sink& sink) : fft(fftOrder), spectrogramSink(sink) {
+        for (int i = 0; i < fftSize; ++i)
+            hannWindow[i] = 0.5f * (1.0f - std::cos(2.0f * float(M_PI) * i / (fftSize - 1)));
     }
 
-    void pushSamples(const float* mono, int numSamples) {
+    void pushSamples(const float* monoSamples, int numSamples) {
         for (int i = 0; i < numSamples; ++i) {
-            inputRing_[ringPos_] = mono[i];
-            ringPos_ = (ringPos_ + 1) % kFftSize;
-            if (++hopAccum_ >= kHopSize) {
-                hopAccum_ = 0;
+            inputRingBuffer[ringWritePosition] = monoSamples[i];
+            ringWritePosition = (ringWritePosition + 1) % fftSize;
+            if (++samplesSinceLastHop >= hopSize) {
+                samplesSinceLastHop = 0;
                 processFrame();
             }
         }
     }
 
 private:
-    static constexpr float kMinDb = -80.0f;
-    static constexpr float kMaxDb =   0.0f;
+    static constexpr float minDecibels = -80.0f;
+    static constexpr float maxDecibels =   0.0f;
+
+    juce::dsp::FFT fft;
+    Sink& spectrogramSink;
+    float inputRingBuffer[fftSize]{};
+    float fftWorkBuffer[fftSize * 2]{};
+    float hannWindow[fftSize]{};
+    int ringWritePosition  = 0;
+    int samplesSinceLastHop = 0;
 
     void processFrame() {
-        for (int i = 0; i < kFftSize; ++i) {
-            int src = (ringPos_ + i) % kFftSize;
-            fftBuf_[i] = inputRing_[src] * window_[i];
+        for (int i = 0; i < fftSize; ++i) {
+            int sourceIndex = (ringWritePosition + i) % fftSize;
+            fftWorkBuffer[i] = inputRingBuffer[sourceIndex] * hannWindow[i];
         }
-        std::fill(fftBuf_ + kFftSize, fftBuf_ + kFftSize * 2, 0.0f);
-        fft_.performRealOnlyForwardTransform(fftBuf_);
+        std::fill(fftWorkBuffer + fftSize, fftWorkBuffer + fftSize * 2, 0.0f);
+        fft.performRealOnlyForwardTransform(fftWorkBuffer);
 
-        float bins[kNumBins];
-        for (int k = 0; k < kNumBins; ++k) {
-            float re  = fftBuf_[2 * k];
-            float im  = fftBuf_[2 * k + 1];
-            float mag = std::sqrt(re * re + im * im);
-            float db  = 20.0f * std::log10(std::max(mag, 1e-6f));
-            bins[k]   = std::clamp((db - kMinDb) / (kMaxDb - kMinDb), 0.0f, 1.0f);
+        float magnitudeBins[numFrequencyBins];
+        for (int k = 0; k < numFrequencyBins; ++k) {
+            float realPart  = fftWorkBuffer[2 * k];
+            float imaginaryPart  = fftWorkBuffer[2 * k + 1];
+            float magnitude = std::sqrt(realPart * realPart + imaginaryPart * imaginaryPart);
+            float decibels  = 20.0f * std::log10(std::max(magnitude, 1e-6f));
+            magnitudeBins[k] = std::clamp((decibels - minDecibels) / (maxDecibels - minDecibels), 0.0f, 1.0f);
         }
-        sink_.pushFrame(bins);
+        spectrogramSink.pushFrame(magnitudeBins);
     }
 
-    juce::dsp::FFT fft_;
-    Sink& sink_;
-    float inputRing_[kFftSize]{};
-    float fftBuf_[kFftSize * 2]{};
-    float window_[kFftSize]{};
-    int ringPos_  = 0;
-    int hopAccum_ = 0;
 };

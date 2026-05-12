@@ -5,36 +5,37 @@
 
 class SpectrogramBuffer {
 public:
-    static constexpr int kMaxFrames = 512;
-    static constexpr int kNumBins   = 512; // FFT_SIZE / 2
+    static constexpr int maxFrames = 512;
+    static constexpr int numFrequencyBins   = 512; // FFT_SIZE / 2
 
-    void pushFrame(const float* bins) {
-        std::lock_guard<std::mutex> lk(mtx_);
-        std::copy(bins, bins + kNumBins, data_[writeHead_]);
-        writeHead_ = (writeHead_ + 1) % kMaxFrames;
-        if (totalFrames_ < kMaxFrames)
-            ++totalFrames_;
+    void pushFrame(const float* magnitudeBins) {
+        std::lock_guard<std::mutex> lock(bufferMutex);
+        std::copy(magnitudeBins, magnitudeBins + numFrequencyBins, frameData[writeHead]);
+        writeHead = (writeHead + 1) % maxFrames;
+        if (storedFrameCount < maxFrames)
+            ++storedFrameCount;
     }
 
-    int getSnapshot(float (*dst)[kNumBins], int maxFrames) const {
-        std::lock_guard<std::mutex> lk(mtx_);
-        int n     = std::min(totalFrames_, maxFrames);
-        int start = (writeHead_ - n + kMaxFrames) % kMaxFrames;
-        for (int i = 0; i < n; ++i) {
-            int src = (start + i) % kMaxFrames;
-            std::copy(data_[src], data_[src] + kNumBins, dst[i]);
+    int getSnapshot(float (*destination)[numFrequencyBins], int requestedFrameCount) const {
+        std::lock_guard<std::mutex> lock(bufferMutex);
+        const int framesToCopy = std::min(storedFrameCount, requestedFrameCount);
+        const int startIndex = (writeHead - framesToCopy + maxFrames) % maxFrames;
+        for (int i = 0; i < framesToCopy; ++i) {
+            int sourceIndex = (startIndex + i) % maxFrames;
+            std::copy(frameData[sourceIndex], frameData[sourceIndex] + numFrequencyBins, destination[i]);
         }
-        return n;
+
+        return framesToCopy;
     }
 
     int totalFrames() const {
-        std::lock_guard<std::mutex> lk(mtx_);
-        return totalFrames_;
+        std::lock_guard<std::mutex> lock(bufferMutex);
+        return storedFrameCount;
     }
 
 private:
-    mutable std::mutex mtx_;
-    float data_[kMaxFrames][kNumBins]{};
-    int   writeHead_   = 0;
-    int   totalFrames_ = 0;
+    mutable std::mutex bufferMutex;
+    float frameData[maxFrames][numFrequencyBins]{};
+    int   writeHead   = 0;
+    int   storedFrameCount = 0;
 };

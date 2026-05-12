@@ -33,16 +33,16 @@ public:
     static SpectrogramBuffer&  getSpectrogramBuffer();
 
 private:
-    double sampleRate = 44100.0;
+    double currentSampleRate = 44100.0;
 
     juce::AudioFormatManager formatManager;
     std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
     juce::AudioTransportSource transportSource;
 
-    static std::atomic<float> s_audioLevel;
-    static std::atomic<bool>  s_audioReady;
-    static SpectrogramBuffer  s_spectrogramBuffer;
+    static std::atomic<float> currentAudioLevel;
+    static std::atomic<bool>  audioReadyFlag;
+    static SpectrogramBuffer  spectrogramFrameBuffer;
 
-    STFTProcessor<SpectrogramBuffer> stft_{ s_spectrogramBuffer };
-    std::vector<float> monoMix_;
+    STFTProcessor<SpectrogramBuffer> stftProcessor{ spectrogramFrameBuffer };
+    std::vector<float> monoMixBuffer;
 };

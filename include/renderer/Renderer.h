@@ -5,6 +5,7 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <array>
 
 class Renderer {
 public:
@@ -14,7 +15,8 @@ public:
     static float getAudioLevel();
     static GLFWwindow* getWindow();
 private:
-    bool buffersReady = false;
-    static GLuint loadShader(const char* s, int type);
-    static void createBuffers(float verts[]);
+    // bool buffersReady = false;
+
+    static GLuint loadShader(const char* shaderSource, int shaderType);
+    static void createBuffers(const std::array<float, 9>& triangleVertices);
 };

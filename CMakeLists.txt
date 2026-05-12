@@ -22,15 +22,21 @@ add_library(glad STATIC include/glad/src/glad.c)
 target_include_directories(glad PUBLIC include/glad/include)
 target_link_libraries(glad PRIVATE ${CMAKE_DL_LIBS})
 
-set(SOURCE_FILES
-    src/main.cpp
+set(INCLUDE_FILES
     include/audio/AudioEngine.h
     include/renderer/Renderer.h
+)
+
+set(SOURCE_FILES
+    src/main.cpp
     src/audio/AudioEngine.cpp
     src/renderer/Renderer.cpp
 )
 
-add_executable(3dAudioVisualizer ${SOURCE_FILES})
+add_executable(3dAudioVisualizer 
+    ${SOURCE_FILES}
+    ${INCLUDE_FILES}
+)
 
 add_compile_definitions(JUCE_USE_CURL=0 JUCE_USE_MP3AUDIOFORMAT=1)
 

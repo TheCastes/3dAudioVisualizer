@@ -32,8 +32,6 @@ public:
     static std::atomic<bool>&  getAudioReady();
     static SpectrogramBuffer&  getSpectrogramBuffer();
 
-    static void runInBackground();
-
 private:
     double sampleRate = 44100.0;
 
@@ -45,6 +43,6 @@ private:
     static std::atomic<bool>  s_audioReady;
     static SpectrogramBuffer  s_spectrogramBuffer;
 
-    STFTProcessor stft_{ s_spectrogramBuffer };
-    std::vector<float> monoMix_; // pre-allocated to avoid audio-thread heap alloc
+    STFTProcessor<SpectrogramBuffer> stft_{ s_spectrogramBuffer };
+    std::vector<float> monoMix_;
 };

@@ -78,19 +78,3 @@ std::atomic<float>&  AudioEngine::getAudioLevel()       { return s_audioLevel; }
 std::atomic<bool>&   AudioEngine::getAudioReady()       { return s_audioReady; }
 SpectrogramBuffer&   AudioEngine::getSpectrogramBuffer(){ return s_spectrogramBuffer; }
 
-void AudioEngine::runInBackground() {
-    juce::ScopedJuceInitialiser_GUI juceInit;
-    AudioEngine eng;
-    juce::AudioDeviceManager dm;
-
-    auto err = dm.initialise(0, 2, nullptr, true);
-    if (err.isEmpty()) {
-        dm.addAudioCallback(&eng);
-        dm.restartLastAudioDevice();
-        s_audioReady.store(true, std::memory_order_release);
-        std::cout << "JUCE Audio inizializzato\n";
-        juce::MessageManager::getInstance()->runDispatchLoop();
-    } else {
-        std::cerr << "JUCE Audio init skipped: " << err.toStdString() << "\n";
-    }
-}

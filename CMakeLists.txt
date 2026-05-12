@@ -33,7 +33,6 @@ set(INCLUDE_FILES
 set(SOURCE_FILES
     src/main.cpp
     src/audio/AudioEngine.cpp
-    src/audio/STFTProcessor.cpp
     src/audio/SpectrogramExporter.cpp
     src/renderer/Renderer.cpp
 )

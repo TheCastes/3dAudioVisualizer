@@ -42,6 +42,9 @@ int main(int argc, char* argv[]) {
     for (int i = 0; i < 200 && !AudioEngine::getAudioReady().load(); ++i)
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
+    if (!audioFile.empty())
+        SpectrogramExporter::exportFullTrack(audioFile, "spectrogram_full.ppm");
+
     if (!Renderer::init()) {
         std::cerr << "Renderer init fallito\n";
         return -1;
@@ -54,8 +57,7 @@ int main(int argc, char* argv[]) {
 
     std::cout << "Chiusura in corso...\n";
 
-    // Export spectrogram before tearing down audio
-    SpectrogramExporter::exportPPM(AudioEngine::getSpectrogramBuffer(), "spectrogram.ppm");
+    SpectrogramExporter::exportPPM(AudioEngine::getSpectrogramBuffer(), "spectrogram_realtime.ppm");
 
     Renderer::shutdown();
     juce::MessageManager::getInstance()->stopDispatchLoop();

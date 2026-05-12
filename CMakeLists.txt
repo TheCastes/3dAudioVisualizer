@@ -24,25 +24,35 @@ target_link_libraries(glad PRIVATE ${CMAKE_DL_LIBS})
 
 set(INCLUDE_FILES
     include/audio/AudioEngine.h
+    include/audio/SpectrogramBuffer.h
+    include/audio/STFTProcessor.h
+    include/audio/SpectrogramExporter.h
     include/renderer/Renderer.h
 )
 
 set(SOURCE_FILES
     src/main.cpp
     src/audio/AudioEngine.cpp
+    src/audio/STFTProcessor.cpp
+    src/audio/SpectrogramExporter.cpp
     src/renderer/Renderer.cpp
 )
 
-add_executable(3dAudioVisualizer 
+add_executable(3dAudioVisualizer
     ${SOURCE_FILES}
     ${INCLUDE_FILES}
 )
 
-add_compile_definitions(JUCE_USE_CURL=0 JUCE_USE_MP3AUDIOFORMAT=1)
+add_compile_definitions(
+    JUCE_USE_CURL=0
+    JUCE_USE_MP3AUDIOFORMAT=1
+    JUCE_DSP_USE_VDSP=0
+)
 
 target_link_libraries(3dAudioVisualizer PRIVATE
     juce::juce_audio_devices
     juce::juce_audio_formats
+    juce::juce_dsp
     juce::juce_core
     glfw
     glm::glm

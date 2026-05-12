@@ -1,4 +1,5 @@
 #include "../include/audio/AudioEngine.h"
+#include "../include/audio/SpectrogramExporter.h"
 #include "../include/renderer/Renderer.h"
 
 #include <juce_core/juce_core.h>
@@ -52,6 +53,10 @@ int main(int argc, char* argv[]) {
     }
 
     std::cout << "Chiusura in corso...\n";
+
+    // Export spectrogram before tearing down audio
+    SpectrogramExporter::exportPPM(AudioEngine::getSpectrogramBuffer(), "spectrogram.ppm");
+
     Renderer::shutdown();
     juce::MessageManager::getInstance()->stopDispatchLoop();
     juceThread.join();

@@ -5,14 +5,16 @@
 #include <atomic>
 #include <memory>
 #include <string>
+#include <vector>
+
+#include "SpectrogramBuffer.h"
+#include "STFTProcessor.h"
 
 class AudioEngine : public juce::AudioIODeviceCallback {
 public:
     AudioEngine();
     ~AudioEngine() override;
 
-    // Load an audio file for playback. Must be called from the message thread.
-    // Returns false if the file cannot be read.
     bool loadFile(const std::string& path);
 
     void play();
@@ -27,7 +29,8 @@ public:
         int numSamples, const juce::AudioIODeviceCallbackContext&) override;
 
     static std::atomic<float>& getAudioLevel();
-    static std::atomic<bool>& getAudioReady();
+    static std::atomic<bool>&  getAudioReady();
+    static SpectrogramBuffer&  getSpectrogramBuffer();
 
     static void runInBackground();
 
@@ -39,5 +42,9 @@ private:
     juce::AudioTransportSource transportSource;
 
     static std::atomic<float> s_audioLevel;
-    static std::atomic<bool> s_audioReady;
+    static std::atomic<bool>  s_audioReady;
+    static SpectrogramBuffer  s_spectrogramBuffer;
+
+    STFTProcessor stft_{ s_spectrogramBuffer };
+    std::vector<float> monoMix_; // pre-allocated to avoid audio-thread heap alloc
 };

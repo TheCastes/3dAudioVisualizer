@@ -19,6 +19,7 @@ public:
     bool init();
     void render(float currentAudioLevel) const;
     bool shouldClose() const;
+    GLFWwindow* getWindow() const { return applicationWindow; }
 private:
     GLuint loadShader(const char* shaderSource, int shaderType);
     void createBuffers(const std::array<float, 9>& triangleVertices);

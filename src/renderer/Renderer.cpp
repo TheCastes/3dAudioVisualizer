@@ -1,16 +1,21 @@
-#include "../../include/renderer/Renderer.h"
-#include "../../include/audio/AudioEngine.h"
-
 #include <iostream>
 #include <array>
 
-static GLFWwindow* applicationWindow = nullptr;
-static GLuint shaderProgram = 0;
-static GLuint vertexArrayObject = 0;
-static GLuint vertexBufferObject = 0;
+#include "../../include/renderer/Renderer.h"
+
+Renderer::Renderer() = default;
+
+Renderer::~Renderer() {
+    if (!isInitialized) return;
+
+    glDeleteProgram(shaderProgram);
+    glDeleteBuffers(1, &vertexBufferObject);
+    glDeleteVertexArrays(1, &vertexArrayObject);
+    glfwDestroyWindow(applicationWindow);
+    glfwTerminate();
+}
 
 bool Renderer::init() {
-
     if (!glfwInit()) { 
         std::cerr << "GLFW init fallito\n"; 
         return false; 
@@ -21,7 +26,6 @@ bool Renderer::init() {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     applicationWindow = glfwCreateWindow(800, 600, "3dAudioVisualizer", nullptr, nullptr);
-
     if (!applicationWindow) { 
         std::cerr << "Creazione finestra fallita\n"; 
         return false;
@@ -30,9 +34,13 @@ bool Renderer::init() {
     glfwMakeContextCurrent(applicationWindow);
 
     if (!gladLoadGL()) {
-        std::cerr << "GLAD inizializzazione fallita\n"; 
+        std::cerr << "GLAD inizializzazione fallita\n";
+        glfwDestroyWindow(applicationWindow);
+        applicationWindow = nullptr;
+        glfwTerminate();
         return false; 
     }
+
     std::cout << "GLAD OK | OpenGL: " << glGetString(GL_VERSION) << "\n";
 
     // TODO SHADER INLINE, TOCCA MODIFICARE
@@ -59,6 +67,17 @@ bool Renderer::init() {
     return true;
 }
 
+void Renderer::render(const float currentAudioLevel) const {
+    glUniform1f(glGetUniformLocation(shaderProgram, "u_level"), currentAudioLevel);
+
+    glClear(GL_COLOR_BUFFER_BIT);
+    glBindVertexArray(vertexArrayObject);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glBindVertexArray(0);
+
+    glfwSwapBuffers(applicationWindow);
+}
+
 void Renderer::createBuffers(const std::array<float, 9>& triangleVertices) {
     glGenVertexArrays(1, &vertexArrayObject);
     glGenBuffers(1, &vertexBufferObject);
@@ -71,37 +90,13 @@ void Renderer::createBuffers(const std::array<float, 9>& triangleVertices) {
     glBindVertexArray(0);
 }
 
-GLuint Renderer::loadShader(const char* shaderSource, int shaderType) {
-    GLuint shader = glCreateShader(shaderType);
+bool Renderer::shouldClose() const {
+    return glfwWindowShouldClose(applicationWindow);
+}
+
+GLuint Renderer::loadShader(const char* shaderSource, const int shaderType) {
+    const GLuint shader = glCreateShader(shaderType);
     glShaderSource(shader, 1, &shaderSource, nullptr); 
     glCompileShader(shader);
     return shader;
-}
-
-void Renderer::shutdown() {
-    glDeleteProgram(shaderProgram);
-    glDeleteBuffers(1, &vertexBufferObject);
-    glDeleteVertexArrays(1, &vertexArrayObject);
-    glfwDestroyWindow(applicationWindow);
-    glfwTerminate();
-}
-
-void Renderer::render() {
-    float level = getAudioLevel();
-    glUniform1f(glGetUniformLocation(shaderProgram, "u_level"), level);
-
-    glClear(GL_COLOR_BUFFER_BIT);
-    glBindVertexArray(vertexArrayObject);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
-    glBindVertexArray(0);
-
-    glfwSwapBuffers(applicationWindow);
-}
-
-float Renderer::getAudioLevel() {
-    return AudioEngine::getAudioLevel().load(std::memory_order_relaxed);
-}
-
-GLFWwindow* Renderer::getWindow() {
-    return applicationWindow;
 }

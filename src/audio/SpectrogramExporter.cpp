@@ -10,134 +10,161 @@
 #include <iostream>
 #include <vector>
 
-// ---------------------------------------------------------------------------
-// Local helpers
-// ---------------------------------------------------------------------------
-
 namespace {
 
-void heatmap(float v, unsigned char& r, unsigned char& g, unsigned char& b) {
-    v = std::clamp(v, 0.0f, 1.0f);
+void heatmap(float normalizedValue,
+             unsigned char& outRed,
+             unsigned char& outGreen,
+             unsigned char& outBlue)
+{
+    normalizedValue = std::clamp(normalizedValue, 0.0f, 1.0f);
 
     // 5-stop colormap: black(0) → blue(.25) → cyan(.5) → yellow(.75) → red(1)
-    struct Stop { float pos, r, g, b; };
-    static constexpr Stop stops[] = {
+    struct ColorStop { float position, red, green, blue; };
+    static constexpr ColorStop colorStops[] = {
         { 0.00f, 0, 0, 0 },
         { 0.25f, 0, 0, 1 },
         { 0.50f, 0, 1, 1 },
         { 0.75f, 1, 1, 0 },
         { 1.00f, 1, 0, 0 },
     };
-    constexpr int nStops = int(sizeof(stops) / sizeof(stops[0]));
+    constexpr int stopCount = int(sizeof(colorStops) / sizeof(colorStops[0]));
 
-    int i = 0;
-    while (i < nStops - 2 && v > stops[i + 1].pos)
-        ++i;
+    int stopIndex = 0;
+    while (stopIndex < stopCount - 2 && normalizedValue > colorStops[stopIndex + 1].position)
+        ++stopIndex;
 
-    const float t = (v - stops[i].pos) / (stops[i + 1].pos - stops[i].pos);
-    r = static_cast<unsigned char>((stops[i].r + t * (stops[i + 1].r - stops[i].r)) * 255.f);
-    g = static_cast<unsigned char>((stops[i].g + t * (stops[i + 1].g - stops[i].g)) * 255.f);
-    b = static_cast<unsigned char>((stops[i].b + t * (stops[i + 1].b - stops[i].b)) * 255.f);
+    const float interpolationT =
+        (normalizedValue - colorStops[stopIndex].position) /
+        (colorStops[stopIndex + 1].position - colorStops[stopIndex].position);
+
+    outRed   = static_cast<unsigned char>(
+        (colorStops[stopIndex].red   + interpolationT *
+         (colorStops[stopIndex + 1].red   - colorStops[stopIndex].red))   * 255.f);
+    outGreen = static_cast<unsigned char>(
+        (colorStops[stopIndex].green + interpolationT *
+         (colorStops[stopIndex + 1].green - colorStops[stopIndex].green)) * 255.f);
+    outBlue  = static_cast<unsigned char>(
+        (colorStops[stopIndex].blue  + interpolationT *
+         (colorStops[stopIndex + 1].blue  - colorStops[stopIndex].blue))  * 255.f);
 }
 
-// Writes a PPM where getValue(col, row) returns the [0,1] value for that pixel.
-template<typename F>
-void writePPM(const std::string& path, int W, int H, F getValue) {
-    std::ofstream ofs(path, std::ios::binary);
-    if (!ofs) {
-        std::cerr << "[SpectrogramExporter] Cannot open: " << path << "\n";
+// Scrive un PPM dove pixelValueAccessor(column, row) ritorna il valore [0,1] del pixel.
+template<typename PixelValueAccessor>
+void writePPM(const std::string& outputPath,
+              int imageWidth,
+              int imageHeight,
+              PixelValueAccessor pixelValueAccessor)
+{
+    std::ofstream outputStream(outputPath, std::ios::binary);
+    if (!outputStream) {
+        std::cerr << "[SpectrogramExporter] Cannot open: " << outputPath << "\n";
         return;
     }
-    ofs << "P6\n" << W << " " << H << "\n255\n";
-    for (int row = H - 1; row >= 0; --row) { // low frequency at bottom
-        for (int col = 0; col < W; ++col) {
-            unsigned char r, g, b;
-            heatmap(getValue(col, row), r, g, b);
-            ofs.put(char(r)).put(char(g)).put(char(b));
+    outputStream << "P6\n" << imageWidth << " " << imageHeight << "\n255\n";
+    for (int row = imageHeight - 1; row >= 0; --row) { // basse frequenze in basso
+        for (int column = 0; column < imageWidth; ++column) {
+            unsigned char red, green, blue;
+            heatmap(pixelValueAccessor(column, row), red, green, blue);
+            outputStream.put(char(red)).put(char(green)).put(char(blue));
         }
     }
-    std::cout << "[SpectrogramExporter] " << path
-              << "  (" << W << " frames x " << H << " bins)\n";
+    std::cout << "[SpectrogramExporter] " << outputPath
+              << "  (" << imageWidth << " frames x " << imageHeight << " bins)\n";
 }
 
-// Sink for STFTProcessor that accumulates every frame into a vector.
+// Sink per STFTProcessor che accumula ogni frame in un vector.
 struct FrameAccumulator {
-    static constexpr int numFrequencyBins = 512; // matches STFTProcessor::numFrequencyBins
-    std::vector<std::array<float, numFrequencyBins>> frames;
+    static constexpr int numFrequencyBins = 512;
+    std::vector<std::array<float, numFrequencyBins>> accumulatedFrames;
 
-    void pushFrame(const float* bins) {
-        frames.emplace_back();
-        std::copy(bins, bins + numFrequencyBins, frames.back().data());
+    void pushFrame(const float* magnitudeBins) {
+        accumulatedFrames.emplace_back();
+        std::copy(magnitudeBins,
+                  magnitudeBins + numFrequencyBins,
+                  accumulatedFrames.back().data());
     }
 };
 
 } // namespace
 
-// ---------------------------------------------------------------------------
-// SpectrogramExporter
-// ---------------------------------------------------------------------------
+void SpectrogramExporter::exportPPM(const SpectrogramBuffer& spectrogramBuffer,
+                                    const std::string& outputPath)
+{
+    // Allochiamo per il caso peggiore (buffer pieno).
+    // getSnapshot ci dirà quanti ne ha effettivamente copiati.
+    std::vector<std::array<float, SpectrogramBuffer::numFrequencyBins>>
+        snapshotFrames(SpectrogramBuffer::maxFrames);
 
-void SpectrogramExporter::exportPPM(const SpectrogramBuffer& buf, const std::string& path) {
-    const int numFrames = buf.totalFrames();
-    if (numFrames == 0) {
+    const int copiedFrameCount = spectrogramBuffer.getSnapshot(
+        snapshotFrames.data(),
+        SpectrogramBuffer::maxFrames);
+
+    if (copiedFrameCount == 0) {
         std::cerr << "[SpectrogramExporter] No frames to export.\n";
         return;
     }
 
-    const int n = std::min(numFrames, SpectrogramBuffer::maxFrames);
-    std::vector<std::array<float, SpectrogramBuffer::numFrequencyBins> > snapshot(n);
-    buf.getSnapshot(
-        reinterpret_cast<float(*)[SpectrogramBuffer::numFrequencyBins]>(snapshot.data()), n);
-
-    writePPM(path, n, SpectrogramBuffer::numFrequencyBins,
-             [&](int col, int row) { return snapshot[col][row]; });
+    writePPM(outputPath,
+             copiedFrameCount,
+             SpectrogramBuffer::numFrequencyBins,
+             [&](int column, int row) { return snapshotFrames[column][row]; });
 }
 
-void SpectrogramExporter::exportFullTrack(const std::string& audioPath, const std::string& outPath) {
-    juce::AudioFormatManager fmt;
-    fmt.registerBasicFormats();
-    fmt.registerFormat(new juce::MP3AudioFormat(), true);
+void SpectrogramExporter::exportFullTrack(const std::string& audioPath,
+                                          const std::string& outputPath)
+{
+    juce::AudioFormatManager formatManager;
+    formatManager.registerBasicFormats();
+    formatManager.registerFormat(new juce::MP3AudioFormat(), true);
 
-    std::unique_ptr<juce::AudioFormatReader> reader(
-        fmt.createReaderFor(juce::File(audioPath)));
-    if (!reader) {
+    std::unique_ptr<juce::AudioFormatReader> audioReader(
+        formatManager.createReaderFor(juce::File(audioPath)));
+    if (!audioReader) {
         std::cerr << "[SpectrogramExporter] Cannot read: " << audioPath << "\n";
         return;
     }
 
-    FrameAccumulator acc;
-    STFTProcessor<FrameAccumulator> stft(acc);
+    FrameAccumulator frameAccumulator;
+    STFTProcessor<FrameAccumulator> offlineStftProcessor(frameAccumulator);
 
-    constexpr int chunkSize = 4096;
-    juce::AudioBuffer<float> chunk(static_cast<int>(reader->numChannels), chunkSize);
-    const int numCh       = chunk.getNumChannels();
-    const float scale     = numCh > 0 ? 1.0f / static_cast<float>(numCh) : 1.0f;
-    std::vector<float> mono(chunkSize);
+    constexpr int chunkSampleCount = 4096;
+    juce::AudioBuffer<float> audioChunk(
+        static_cast<int>(audioReader->numChannels),
+        chunkSampleCount);
+    const int numChannels = audioChunk.getNumChannels();
+    const float channelScale = numChannels > 0 ? 1.0f / static_cast<float>(numChannels) : 1.0f;
+    std::vector<float> monoChunk(chunkSampleCount);
 
-    juce::int64 pos = 0;
-    const juce::int64 total = static_cast<juce::int64>(reader->lengthInSamples);
+    juce::int64 currentReadPosition = 0;
+    const juce::int64 totalSampleCount =
+        static_cast<juce::int64>(audioReader->lengthInSamples);
 
-    while (pos < total) {
-        const int toRead = static_cast<int>(std::min<juce::int64>(chunkSize, total - pos));
-        reader->read(&chunk, 0, toRead, pos, true, true);
+    while (currentReadPosition < totalSampleCount) {
+        const int samplesToRead = static_cast<int>(
+            std::min<juce::int64>(chunkSampleCount,
+                                  totalSampleCount - currentReadPosition));
+        audioReader->read(&audioChunk, 0, samplesToRead, currentReadPosition, true, true);
 
-        std::fill_n(mono.begin(), toRead, 0.0f);
-        for (int ch = 0; ch < numCh; ++ch) {
-            const float* src = chunk.getReadPointer(ch);
-            for (int i = 0; i < toRead; ++i)
-                mono[i] += src[i] * scale;
+        std::fill_n(monoChunk.begin(), samplesToRead, 0.0f);
+        for (int channel = 0; channel < numChannels; ++channel) {
+            const float* channelData = audioChunk.getReadPointer(channel);
+            for (int sample = 0; sample < samplesToRead; ++sample)
+                monoChunk[sample] += channelData[sample] * channelScale;
         }
-        stft.pushSamples(mono.data(), toRead);
-        pos += toRead;
+        offlineStftProcessor.pushSamples(monoChunk.data(), samplesToRead);
+        currentReadPosition += samplesToRead;
     }
 
-    if (acc.frames.empty()) {
+    if (frameAccumulator.accumulatedFrames.empty()) {
         std::cerr << "[SpectrogramExporter] No frames produced.\n";
         return;
     }
 
-    const int W = static_cast<int>(acc.frames.size());
-    constexpr int H = FrameAccumulator::numFrequencyBins;
-    writePPM(outPath, W, H,
-             [&](int col, int row) { return acc.frames[col][row]; });
+    const int frameCount = static_cast<int>(frameAccumulator.accumulatedFrames.size());
+    constexpr int binCount = FrameAccumulator::numFrequencyBins;
+    writePPM(outputPath, frameCount, binCount,
+             [&](int column, int row) {
+                 return frameAccumulator.accumulatedFrames[column][row];
+             });
 }

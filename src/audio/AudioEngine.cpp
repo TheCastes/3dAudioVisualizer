@@ -1,10 +1,6 @@
 #include "../../include/audio/AudioEngine.h"
 #include <cmath>
 
-std::atomic<float> AudioEngine::currentAudioLevel{0.0f};
-std::atomic<bool> AudioEngine::audioReadyFlag{false};
-SpectrogramBuffer AudioEngine::spectrogramFrameBuffer{};
-
 AudioEngine::AudioEngine() {
     formatManager.registerBasicFormats();
     formatManager.registerFormat(new juce::MP3AudioFormat(), true);
@@ -33,6 +29,26 @@ void AudioEngine::stop() {
 }
 bool AudioEngine::isPlaying() const {
     return transportSource.isPlaying();
+}
+
+float AudioEngine::getCurrentAudioLevel() const {
+    return currentAudioLevel.load(std::memory_order_relaxed);
+}
+
+bool AudioEngine::isAudioReady() const {
+    return audioReadyFlag.load(std::memory_order_acquire);
+}
+
+void AudioEngine::setAudioReady() {
+    audioReadyFlag.store(true, std::memory_order_release);
+}
+
+SpectrogramBuffer& AudioEngine::getSpectrogramBuffer() {
+    return spectrogramFrameBuffer;
+}
+
+const SpectrogramBuffer& AudioEngine::getSpectrogramBuffer() const {
+    return spectrogramFrameBuffer;
 }
 
 void AudioEngine::audioDeviceAboutToStart(juce::AudioIODevice* device) {
@@ -80,14 +96,4 @@ void AudioEngine::audioDeviceIOCallbackWithContext(const float* const*, int, flo
     }
 
     stftProcessor.pushSamples(monoMixBuffer.data(), numSamples);
-}
-
-std::atomic<float>& AudioEngine::getAudioLevel() {
-    return currentAudioLevel;
-}
-std::atomic<bool>& AudioEngine::getAudioReady() {
-    return audioReadyFlag;
-}
-SpectrogramBuffer& AudioEngine::getSpectrogramBuffer() {
-    return spectrogramFrameBuffer;
 }

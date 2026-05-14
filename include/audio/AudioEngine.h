@@ -15,11 +15,22 @@ public:
     AudioEngine();
     ~AudioEngine() override;
 
+    AudioEngine(const AudioEngine& copy) = delete;
+    AudioEngine& operator=(const AudioEngine&) = delete;
+    AudioEngine(AudioEngine&& move) = delete;
+    AudioEngine& operator=(AudioEngine&&) = delete;
+
     bool loadFile(const std::string& path);
 
     void play();
     void stop();
     bool isPlaying() const;
+
+    float getCurrentAudioLevel() const;
+    bool isAudioReady() const;
+    void setAudioReady();
+    SpectrogramBuffer& getSpectrogramBuffer();
+    const SpectrogramBuffer& getSpectrogramBuffer() const;
 
     void audioDeviceAboutToStart(juce::AudioIODevice* device) override;
     void audioDeviceStopped() override;
@@ -28,10 +39,6 @@ public:
         float* const* outputChannelData, int numOutputChannels,
         int numSamples, const juce::AudioIODeviceCallbackContext&) override;
 
-    static std::atomic<float>& getAudioLevel();
-    static std::atomic<bool>&  getAudioReady();
-    static SpectrogramBuffer&  getSpectrogramBuffer();
-
 private:
     double currentSampleRate = 44100.0;
 
@@ -39,9 +46,9 @@ private:
     std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
     juce::AudioTransportSource transportSource;
 
-    static std::atomic<float> currentAudioLevel;
-    static std::atomic<bool>  audioReadyFlag;
-    static SpectrogramBuffer  spectrogramFrameBuffer;
+    std::atomic<float> currentAudioLevel{0.0f};
+    std::atomic<bool> audioReadyFlag{false};
+    SpectrogramBuffer spectrogramFrameBuffer;
 
     STFTProcessor<SpectrogramBuffer> stftProcessor{ spectrogramFrameBuffer };
     std::vector<float> monoMixBuffer;

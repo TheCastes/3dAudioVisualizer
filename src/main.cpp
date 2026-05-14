@@ -31,7 +31,7 @@ int main(int argc, char* argv[]) {
                 }
             }
 
-            AudioEngine::getAudioReady().store(true, std::memory_order_release);
+            audioEngine.setAudioReady();
             std::cout << "JUCE Audio inizializzato\n";
             juce::MessageManager::getInstance()->runDispatchLoop();
         } else {
@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
         }
     });
 
-    for (int waitIteration = 0; waitIteration < 200 && !AudioEngine::getAudioReady().load(); ++waitIteration) {
+    for (int waitIteration = 0; waitIteration < 200 && !audioEngine.isAudioReady(); ++waitIteration) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
@@ -57,13 +57,12 @@ int main(int argc, char* argv[]) {
 
     while (!renderer.shouldClose()) {
         glfwPollEvents();
-        const float currentAudioLevel = AudioEngine::getAudioLevel().load(std::memory_order_relaxed);
-        renderer.render(currentAudioLevel);
+        renderer.render(audioEngine.getCurrentAudioLevel());
     }
 
     std::cout << "Chiusura in corso...\n";
 
-    SpectrogramExporter::exportPPM(AudioEngine::getSpectrogramBuffer(), "spectrogram_realtime.ppm");
+    SpectrogramExporter::exportPPM(audioEngine.getSpectrogramBuffer(), "spectrogram_realtime.ppm");
 
     juce::MessageManager::getInstance()->stopDispatchLoop();
     juceThread.join();

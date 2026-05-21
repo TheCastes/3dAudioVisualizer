@@ -72,12 +72,12 @@ void Application::startJuceAudioThread(const std::string& audioFileToPlay) {
 
 
 void Application::waitUntilAudioIsReady() {
-    constexpr int maxWaitIterations = 200;
-    constexpr auto pollInterval = std::chrono::milliseconds(10);
+    constexpr auto readinessTimeout = std::chrono::seconds(2);
+    const bool becameReady = audioEngine.waitUntilReady(readinessTimeout);
 
-    for (int waitIteration = 0; waitIteration < maxWaitIterations && !audioEngine.isAudioReady(); ++waitIteration) {
-        std::this_thread::sleep_for(pollInterval);
-    }
+    if (!becameReady)
+        std::cerr << "Audio engine timed out.\n";
+
 }
 
 

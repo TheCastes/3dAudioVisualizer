@@ -40,7 +40,21 @@ bool AudioEngine::isAudioReady() const {
 }
 
 void AudioEngine::setAudioReady() {
-    audioReadyFlag.store(true, std::memory_order_release);
+    {
+        std::lock_guard<std::mutex> lock(audioReadyMutex);
+        audioReadyFlag.store(true, std::memory_order_release);
+    }
+
+    audioReadyCondition.notify_one();
+}
+
+bool AudioEngine::waitUntilReady(std::chrono::milliseconds timeout) {
+    std::unique_lock<std::mutex> lock(audioReadyMutex);
+
+    return audioReadyCondition.wait_for(lock, timeout, [this]() {
+            return audioReadyFlag.load(std::memory_order_acquire);
+        }
+    );
 }
 
 SpectrogramBuffer& AudioEngine::getSpectrogramBuffer() {

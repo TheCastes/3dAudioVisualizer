@@ -3,7 +3,10 @@
 #include <juce_audio_devices/juce_audio_devices.h>
 #include <juce_audio_formats/juce_audio_formats.h>
 #include <atomic>
+#include <chrono>
+#include <condition_variable>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -27,8 +30,11 @@ public:
     bool isPlaying() const;
 
     float getCurrentAudioLevel() const;
+
     bool isAudioReady() const;
     void setAudioReady();
+    bool waitUntilReady(std::chrono::milliseconds timeout);
+
     SpectrogramBuffer& getSpectrogramBuffer();
     const SpectrogramBuffer& getSpectrogramBuffer() const;
 
@@ -48,6 +54,9 @@ private:
 
     std::atomic<float> currentAudioLevel{0.0f};
     std::atomic<bool> audioReadyFlag{false};
+    std::mutex audioReadyMutex;
+    std::condition_variable audioReadyCondition;
+
     SpectrogramBuffer spectrogramFrameBuffer;
 
     STFTProcessor<SpectrogramBuffer> stftProcessor{ spectrogramFrameBuffer };

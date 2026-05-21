@@ -8,6 +8,4 @@ int main(int argc, char* argv[]) {
 
     Application application;
     return application.run(argv[1]);
-
-
 }

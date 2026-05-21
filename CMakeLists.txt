@@ -23,6 +23,7 @@ target_include_directories(glad PUBLIC include/glad/include)
 target_link_libraries(glad PRIVATE ${CMAKE_DL_LIBS})
 
 set(INCLUDE_FILES
+    include/app/Application.h
     include/audio/AudioEngine.h
     include/audio/SpectrogramBuffer.h
     include/audio/STFTProcessor.h
@@ -32,6 +33,7 @@ set(INCLUDE_FILES
 
 set(SOURCE_FILES
     src/main.cpp
+    src/app/Application.cpp
     src/audio/AudioEngine.cpp
     src/audio/SpectrogramExporter.cpp
     src/renderer/Renderer.cpp

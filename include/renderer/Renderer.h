@@ -6,6 +6,9 @@
 
 #include <array>
 
+#include "Mesh.h"
+#include "Shader.h"
+
 class Renderer {
 public:
     Renderer();
@@ -21,11 +24,11 @@ public:
     bool shouldClose() const;
     GLFWwindow* getWindow() const { return applicationWindow; }
 private:
-    GLuint loadShader(const char* shaderSource, int shaderType);
+    //GLuint loadShader(const char* shaderSource, int shaderType);
     void createBuffers(const std::array<float, 9>& triangleVertices);
-
     GLFWwindow* applicationWindow = nullptr;
-    GLuint shaderProgram = 0;
+    Shader* shader = nullptr;
+    Mesh* mesh = nullptr;
     GLuint vertexArrayObject = 0;
     GLuint vertexBufferObject = 0;
     bool isInitialized = false;

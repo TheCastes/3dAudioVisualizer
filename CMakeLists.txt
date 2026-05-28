@@ -29,6 +29,8 @@ set(INCLUDE_FILES
     include/audio/STFTProcessor.h
     include/audio/SpectrogramExporter.h
     include/renderer/Renderer.h
+    include/renderer/Mesh.h
+    include/renderer/Shader.h
 )
 
 set(SOURCE_FILES
@@ -37,6 +39,7 @@ set(SOURCE_FILES
     src/audio/AudioEngine.cpp
     src/audio/SpectrogramExporter.cpp
     src/renderer/Renderer.cpp
+    src/renderer/Mesh.cpp
 )
 
 add_executable(3dAudioVisualizer

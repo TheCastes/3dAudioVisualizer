@@ -44,8 +44,8 @@ void Mesh::generateGrid(int columns, int rows, int width, int depth) {
             Vertex v;
             v.Position = {
                 (col/(float)columns - 0.5f) * width,
-                0.0f,
-                (row/(float)rows - 0.5f) * depth
+                (row/(float)rows - 0.5f) * depth,
+                0.0f
             };
             v.TexCoords = {
                 col/(float)columns,

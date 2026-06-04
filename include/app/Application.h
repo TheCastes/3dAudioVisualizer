@@ -28,4 +28,8 @@ private:
     Renderer renderer;
     AudioEngine audioEngine;
     std::thread juceAudioThread;
+
+    float deltaTime = 0.0f;
+    float lastFrame = 0.0f;
+    float currentFrame = 0.0;
 };

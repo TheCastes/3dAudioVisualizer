@@ -84,6 +84,10 @@ void Application::waitUntilAudioIsReady() {
 void Application::runRenderLoop() {
     while (!renderer.shouldClose()) {
         glfwPollEvents();
+        currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         const float currentAudioLevel = audioEngine.getCurrentAudioLevel();
         renderer.render(currentAudioLevel);
     }

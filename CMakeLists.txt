@@ -31,6 +31,7 @@ set(INCLUDE_FILES
     include/renderer/Renderer.h
     include/renderer/Mesh.h
     include/renderer/Shader.h
+    include/renderer/Trackball.h
 )
 
 set(SOURCE_FILES
@@ -40,6 +41,7 @@ set(SOURCE_FILES
     src/audio/SpectrogramExporter.cpp
     src/renderer/Renderer.cpp
     src/renderer/Mesh.cpp
+    src/renderer/Trackball.cpp
 )
 
 add_executable(3dAudioVisualizer

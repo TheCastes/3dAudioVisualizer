@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 // data structure for vertices
 struct Vertex {
@@ -21,6 +22,10 @@ class Mesh {
 public:
     std::vector<Vertex> vertices;
     std::vector<GLuint> indices;
+
+    glm::mat4 modelMatrix = glm::mat4(1.0f);
+    glm::mat3 normalMatrix = glm::mat3(1.0f);
+
     GLuint VAO = 0;
 
     Mesh(int columns, int rows, int width, int depth) noexcept;

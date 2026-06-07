@@ -68,10 +68,11 @@ void Renderer::render(const float currentAudioLevel) const {
     glClear(GL_COLOR_BUFFER_BIT);
     glUniformMatrix4fv(glGetUniformLocation(shader->Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
     glUniformMatrix4fv(glGetUniformLocation(shader->Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
+    glUniformMatrix4fv(glGetUniformLocation(shader->Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(mesh->modelMatrix));
+
+    // if not at the bottom it moves like a boid lol
     mesh->Draw();
     mesh->modelMatrix = trackball.rotationMatrix();
-    glUniformMatrix4fv(glGetUniformLocation(shader->Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(mesh->modelMatrix));
-    glfwSwapBuffers(applicationWindow);
 }
 
 bool Renderer::shouldClose() const {
@@ -79,9 +80,9 @@ bool Renderer::shouldClose() const {
 }
 
 void Renderer::transform() const {
-   // mesh->modelMatrix = glm::translate(mesh->modelMatrix, glm::vec3(6.0f, 6.0f, 0.0f));
-   // mesh->modelMatrix = glm::rotate(mesh->modelMatrix , glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-   // mesh->modelMatrix = glm::scale(mesh->modelMatrix, glm::vec3(0.8f, 0.8f, 0.8f));
+    // mesh->modelMatrix = glm::translate(mesh->modelMatrix, glm::vec3(6.0f, 6.0f, 0.0f));
+    // mesh->modelMatrix = glm::rotate(mesh->modelMatrix , glm::radians(45.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    // mesh->modelMatrix = glm::scale(mesh->modelMatrix, glm::vec3(1.8f, 1.8f, 1.8f));
     mesh->normalMatrix = glm::inverseTranspose(glm::mat3(viewMatrix*mesh->modelMatrix));
     glUniformMatrix4fv(glGetUniformLocation(shader->Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(mesh->modelMatrix));
     glUniformMatrix3fv(glGetUniformLocation(shader->Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(mesh->normalMatrix));

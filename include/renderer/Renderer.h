@@ -34,6 +34,8 @@ public:
     static void glfwCursorPosCallback(GLFWwindow *window, double x, double y);
 
     GLFWwindow* getWindow() const { return applicationWindow; }
+    const glm::mat4& getViewMatrix() const { return viewMatrix; }
+    const glm::mat4& getProjectionMatrix() const { return projectionMatrix; }
 private:
     //GLuint loadShader(const char* shaderSource, int shaderType);
     void createBuffers(const std::array<float, 9>& triangleVertices);

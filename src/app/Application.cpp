@@ -4,7 +4,6 @@
 #include <string>
 
 #include "../../include/app/Application.h"
-#include "../../include/audio/SpectrogramExporter.h"
 
 #include "juce_events/juce_events.h"
 Application::Application() = default;
@@ -26,12 +25,15 @@ int Application::run(const std::string audioFileToPlay) {
         return -1;
     }
 
+    if (!flocking.init()) {
+        return -1;
+    }
 
     runRenderLoop();
 
+    flocking.cleanup();
+
     std::cout << "Chiusura in corso...\n";
-    exportSpectrogram(audioFileToPlay);
-    std::cout << "Spettrogramma esportato.\n";
     return 0;
 
 }
@@ -82,20 +84,20 @@ void Application::waitUntilAudioIsReady() {
 
 
 void Application::runRenderLoop() {
+    float lastFrame = 0.0f;
+
     while (!renderer.shouldClose()) {
         glfwPollEvents();
-        currentFrame = glfwGetTime();
-        deltaTime = currentFrame - lastFrame;
+        float currentFrame = glfwGetTime();
+        float deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
+
+        flocking.update(audioEngine.getCurrentAudioLevel(), deltaTime);
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        const float currentAudioLevel = audioEngine.getCurrentAudioLevel();
-        renderer.render(currentAudioLevel);
+
+        flocking.render(renderer.getViewMatrix(), renderer.getProjectionMatrix());
+
+        glfwSwapBuffers(renderer.getWindow());
     }
-}
-
-
-void Application::exportSpectrogram(const std::string& audioFileToPlay) {
-    SpectrogramExporter::exportPPM(audioEngine.getSpectrogramBuffer(), "spectrogram_realtime.ppm");
-
-    SpectrogramExporter::exportFullTrack(audioFileToPlay, "spectrogram_full.ppm");
 }

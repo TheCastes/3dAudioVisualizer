@@ -27,21 +27,27 @@ set(INCLUDE_FILES
     include/audio/AudioEngine.h
     include/audio/SpectrogramBuffer.h
     include/audio/STFTProcessor.h
-    include/audio/SpectrogramExporter.h
     include/renderer/Renderer.h
     include/renderer/Mesh.h
     include/renderer/Shader.h
     include/renderer/Trackball.h
+    include/flocking/BoidConfig.h
+    include/flocking/Boid.h
+    include/flocking/BoidSpawner.h
+    include/flocking/BoidRenderer.h
+    include/flocking/Flocking.h
 )
 
 set(SOURCE_FILES
     src/main.cpp
     src/app/Application.cpp
     src/audio/AudioEngine.cpp
-    src/audio/SpectrogramExporter.cpp
     src/renderer/Renderer.cpp
     src/renderer/Mesh.cpp
     src/renderer/Trackball.cpp
+    src/flocking/BoidSpawner.cpp
+    src/flocking/BoidRenderer.cpp
+    src/flocking/Flocking.cpp
 )
 
 add_executable(3dAudioVisualizer

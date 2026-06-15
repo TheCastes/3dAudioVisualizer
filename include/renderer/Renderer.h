@@ -27,7 +27,7 @@ public:
     void render(float currentAudioLevel) const;
     bool shouldClose() const;
 
-    void transform() const;
+    // void transform() const;
 
     static void glfwMouseButtonCallback(GLFWwindow *window, int button, int action, int mods);
 

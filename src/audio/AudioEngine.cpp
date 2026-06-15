@@ -21,6 +21,15 @@ bool AudioEngine::loadFile(const std::string& path) {
     return true;
 }
 
+void AudioEngine::requestLoad(const std::string& path) {
+    juce::MessageManager::callAsync([this, path]() {
+        if (loadFile(path)) {
+            transportSource.setPosition(0.0);
+            play();
+        }
+    });
+}
+
 void AudioEngine::play() {
     transportSource.start();
 }

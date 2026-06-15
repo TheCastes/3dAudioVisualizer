@@ -5,6 +5,7 @@
 
 #include "../audio/AudioEngine.h"
 #include "../renderer/Renderer.h"
+#include "../ui/Ui.h"
 
 class Application {
 public:
@@ -16,16 +17,16 @@ public:
     Application(Application&& move) = delete;
     Application& operator=(Application&&) = delete;
 
-    int run(const std::string audioFileToPlay);
+    int run();
 
 
 private:
-    void startJuceAudioThread(const std::string& audioFileToPlay);
+    void startJuceAudioThread();
     void waitUntilAudioIsReady();
     void runRenderLoop();
-    void exportSpectrogram(const std::string& audioFileToPlay);
 
     Renderer renderer;
+    Ui ui;
     AudioEngine audioEngine;
     std::thread juceAudioThread;
 

@@ -24,6 +24,8 @@ public:
     AudioEngine& operator=(AudioEngine&&) = delete;
 
     bool loadFile(const std::string& path);
+    
+    void requestLoad(const std::string& path);
 
     void play();
     void stop();

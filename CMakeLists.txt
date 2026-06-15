@@ -15,12 +15,37 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(juce)
 
+FetchContent_Declare(
+    imgui
+    GIT_REPOSITORY https://github.com/ocornut/imgui.git
+    GIT_TAG v1.91.5
+    GIT_SHALLOW TRUE
+)
+FetchContent_MakeAvailable(imgui)
+
 find_package(glfw3 REQUIRED)
 find_package(glm REQUIRED)
+find_package(OpenGL REQUIRED)
 
 add_library(glad STATIC include/glad/src/glad.c)
 target_include_directories(glad PUBLIC include/glad/include)
 target_link_libraries(glad PRIVATE ${CMAKE_DL_LIBS})
+
+# Dear ImGui has no official CMake target: build a static lib from core
+# sources plus the GLFW + OpenGL3 backends.
+add_library(imgui STATIC
+    ${imgui_SOURCE_DIR}/imgui.cpp
+    ${imgui_SOURCE_DIR}/imgui_draw.cpp
+    ${imgui_SOURCE_DIR}/imgui_tables.cpp
+    ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
+)
+target_include_directories(imgui PUBLIC
+    ${imgui_SOURCE_DIR}
+    ${imgui_SOURCE_DIR}/backends
+)
+target_link_libraries(imgui PUBLIC glfw OpenGL::GL)
 
 set(INCLUDE_FILES
     include/app/Application.h
@@ -32,6 +57,7 @@ set(INCLUDE_FILES
     include/renderer/Mesh.h
     include/renderer/Shader.h
     include/renderer/Trackball.h
+    include/ui/Ui.h
 )
 
 set(SOURCE_FILES
@@ -42,6 +68,7 @@ set(SOURCE_FILES
     src/renderer/Renderer.cpp
     src/renderer/Mesh.cpp
     src/renderer/Trackball.cpp
+    src/ui/Ui.cpp
 )
 
 add_executable(3dAudioVisualizer
@@ -63,4 +90,5 @@ target_link_libraries(3dAudioVisualizer PRIVATE
     glfw
     glm::glm
     glad
+    imgui
 )

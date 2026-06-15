@@ -48,16 +48,22 @@ bool Renderer::init() {
     glfwGetFramebufferSize(applicationWindow, &viewportWidth, &viewportHeight);
     glViewport(0, 0, viewportWidth, viewportHeight);
 
+    if (viewportHeight > 0)
+        projectionMatrix = glm::perspective(glm::radians(45.0f),
+            (float)viewportWidth / (float)viewportHeight, 0.1f, 10000.0f);
+
     glfwSetWindowUserPointer(applicationWindow, this);
     glfwSetMouseButtonCallback(applicationWindow, glfwMouseButtonCallback);
     glfwSetCursorPosCallback(applicationWindow, glfwCursorPosCallback);
+    glfwSetKeyCallback(applicationWindow, glfwKeyCallback);
 
     glfwSetFramebufferSizeCallback(applicationWindow, [](GLFWwindow* window, const int width, const int height){
             glViewport(0, 0, width, height);
             Renderer* self = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
             self->viewportWidth = width;
             self->viewportHeight = height;
-            self->projectionMatrix = glm::perspective(glm::radians(45.0f), (float)width/(float)height, 0.1f, 10000.0f);
+            if (height > 0)
+                self->projectionMatrix = glm::perspective(glm::radians(45.0f), (float)width/(float)height, 0.1f, 10000.0f);
             });
 
     glEnable(GL_DEPTH_TEST);
@@ -66,20 +72,28 @@ bool Renderer::init() {
     shader->Use();
 
     mesh = new Mesh(128, 128, 10.0f, 10.0f);
-    // transform();
+
     glClearColor(0.05f, 0.05f, 0.1f, 1.0f);
     std::cout << "Rendering loop avviato...\n";
     return true;
 }
 
 void Renderer::render(const float currentAudioLevel) const {
-    glUniform1f(glGetUniformLocation(shader->Program, "u_level"), currentAudioLevel);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    
+    const int subW = static_cast<int>(viewportWidth  * renderFractionW);
+    const int subH = static_cast<int>(viewportHeight * renderFractionH);
+    glViewport(viewportWidth - subW, viewportHeight - subH, subW, subH);
+
+    glUniform1f(glGetUniformLocation(shader->Program, "u_level"), currentAudioLevel);
     glUniformMatrix4fv(glGetUniformLocation(shader->Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
     glUniformMatrix4fv(glGetUniformLocation(shader->Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
     mesh->modelMatrix = trackball.rotationMatrix();
     glUniformMatrix4fv(glGetUniformLocation(shader->Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(mesh->modelMatrix));
     mesh->Draw();
+}
+
+void Renderer::swapBuffers() const {
     glfwSwapBuffers(applicationWindow);
 }
 
@@ -87,18 +101,43 @@ bool Renderer::shouldClose() const {
     return glfwWindowShouldClose(applicationWindow);
 }
 
+bool Renderer::cursorToSubViewport(const double x, const double y, float& localX, float& localY,
+                                   int& subW, int& subH) const {
+    int winW, winH;
+    glfwGetWindowSize(applicationWindow, &winW, &winH);
+    subW = static_cast<int>(winW * renderFractionW);
+    subH = static_cast<int>(winH * renderFractionH);
+    localX = static_cast<float>(x) - static_cast<float>(winW - subW); // right aligned
+    localY = static_cast<float>(y);                                   // top aligned
+    return localX >= 0.0f && localX <= static_cast<float>(subW)
+        && localY >= 0.0f && localY <= static_cast<float>(subH);
+}
+
 void Renderer::glfwMouseButtonCallback(GLFWwindow* window, const int button, const int action, int mods) {
     Renderer* self = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
     if (button != GLFW_MOUSE_BUTTON_LEFT) return;
     double x, y;
     glfwGetCursorPos(window, &x, &y);
-    if (action == GLFW_PRESS)
-        self->trackball.mouseDown(static_cast<float>(x), static_cast<float>(y), self->viewportWidth, self->viewportHeight);
+
+    float localX, localY;
+    int subW, subH;
+    const bool insideViewport = self->cursorToSubViewport(x, y, localX, localY, subW, subH);
+    
+    if (action == GLFW_PRESS && insideViewport)
+        self->trackball.mouseDown(localX, localY, subW, subH);
     else if (action == GLFW_RELEASE)
         self->trackball.mouseUp();
 }
 
 void Renderer::glfwCursorPosCallback(GLFWwindow* window, const double x, const double y) {
     Renderer* self = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
-    self->trackball.mouseMove(static_cast<float>(x), static_cast<float>(y), self->viewportWidth, self->viewportHeight);
+    float localX, localY;
+    int subW, subH;
+    self->cursorToSubViewport(x, y, localX, localY, subW, subH);
+    self->trackball.mouseMove(localX, localY, subW, subH);
+}
+
+void Renderer::glfwKeyCallback(GLFWwindow* window, const int key, int scancode, const int action, int mods) {
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, GLFW_TRUE);
 }

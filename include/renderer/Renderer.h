@@ -25,22 +25,28 @@ public:
 
     bool init();
     void render(float currentAudioLevel) const;
+    void swapBuffers() const;
     bool shouldClose() const;
-
-    // void transform() const;
 
     static void glfwMouseButtonCallback(GLFWwindow *window, int button, int action, int mods);
 
     static void glfwCursorPosCallback(GLFWwindow *window, double x, double y);
 
+    static void glfwKeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
+
     GLFWwindow* getWindow() const { return applicationWindow; }
-    glm::mat4 projectionMatrix = glm::perspective(glm::radians(45.0f), (float)screenWidth/(float)screenHeight, 0.1f, 10000.0f);
+    glm::mat4 projectionMatrix = glm::mat4(1.0f);
 private:
     const int screenWidth = 1280;
     const int screenHeight = 720;
 
+    static constexpr float renderFractionW = 0.7f;
+    static constexpr float renderFractionH = 0.7f;
+
     int viewportWidth = 0;
     int viewportHeight = 0;
+
+    bool cursorToSubViewport(double x, double y, float& localX, float& localY, int& subW, int& subH) const;
 
     glm::mat4 viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 10.0f), glm::vec3(0.0f, 0.0f, -10.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 

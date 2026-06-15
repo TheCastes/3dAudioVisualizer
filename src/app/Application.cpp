@@ -4,7 +4,6 @@
 #include <string>
 
 #include "../../include/app/Application.h"
-#include "../../include/audio/SpectrogramExporter.h"
 
 #include "juce_events/juce_events.h"
 Application::Application() = default;
@@ -17,8 +16,8 @@ Application::~Application() {
 }
 
 
-int Application::run(const std::string audioFileToPlay) {
-    startJuceAudioThread(audioFileToPlay);
+int Application::run() {
+    startJuceAudioThread();
     waitUntilAudioIsReady();
 
     if (!renderer.init()) {
@@ -26,19 +25,21 @@ int Application::run(const std::string audioFileToPlay) {
         return -1;
     }
 
+    if (!ui.init(renderer.getWindow())) {
+        std::cerr << "UI init fallito\n";
+        return -1;
+    }
+
+    ui.setLoadCallback([this](const std::string& path) { audioEngine.requestLoad(path); });
+    ui.scanTracks("../assets/tracks");
 
     runRenderLoop();
-
-    std::cout << "Chiusura in corso...\n";
-    exportSpectrogram(audioFileToPlay);
-    std::cout << "Spettrogramma esportato.\n";
     return 0;
-
 }
 
 
-void Application::startJuceAudioThread(const std::string& audioFileToPlay) {
-    juceAudioThread = std::thread( [this, audioFileToPlay]() {
+void Application::startJuceAudioThread() {
+    juceAudioThread = std::thread( [this]() {
 
         juce::ScopedJuceInitialiser_GUI juceInit;
         juce::AudioDeviceManager deviceManager;
@@ -52,14 +53,7 @@ void Application::startJuceAudioThread(const std::string& audioFileToPlay) {
 
         deviceManager.addAudioCallback(&audioEngine);
         deviceManager.restartLastAudioDevice();
-
-        if (audioEngine.loadFile(audioFileToPlay)) {
-            audioEngine.play();
-            std::cout << "Riproduzione: " << audioFileToPlay << "\n";
-        } else {
-            std::cerr << "Impossibile caricare: " << audioFileToPlay << "\n";
-        }
-
+        
         audioEngine.setAudioReady();
         std::cout << "JUCE Audio inizializzato\n";
         juce::MessageManager::getInstance()->runDispatchLoop();
@@ -87,15 +81,12 @@ void Application::runRenderLoop() {
         currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         const float currentAudioLevel = audioEngine.getCurrentAudioLevel();
+
+        ui.beginFrame();
+        ui.draw();
         renderer.render(currentAudioLevel);
+        ui.render();
+        renderer.swapBuffers();
     }
-}
-
-
-void Application::exportSpectrogram(const std::string& audioFileToPlay) {
-    SpectrogramExporter::exportPPM(audioEngine.getSpectrogramBuffer(), "spectrogram_realtime.ppm");
-
-    SpectrogramExporter::exportFullTrack(audioFileToPlay, "spectrogram_full.ppm");
 }

@@ -57,6 +57,7 @@ bool Renderer::init() {
             Renderer* self = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
             self->viewportWidth = width;
             self->viewportHeight = height;
+            self->projectionMatrix = glm::perspective(glm::radians(45.0f), (float)width/(float)height, 0.1f, 10000.0f);
             });
 
     glEnable(GL_DEPTH_TEST);
@@ -73,25 +74,18 @@ bool Renderer::init() {
 
 void Renderer::render(const float currentAudioLevel) const {
     glUniform1f(glGetUniformLocation(shader->Program, "u_level"), currentAudioLevel);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUniformMatrix4fv(glGetUniformLocation(shader->Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
     glUniformMatrix4fv(glGetUniformLocation(shader->Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
-    mesh->Draw();
-    // centerView()
     mesh->modelMatrix = trackball.rotationMatrix();
     glUniformMatrix4fv(glGetUniformLocation(shader->Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(mesh->modelMatrix));
+    mesh->Draw();
     glfwSwapBuffers(applicationWindow);
 }
 
 bool Renderer::shouldClose() const {
     return glfwWindowShouldClose(applicationWindow);
 }
-
-// void Renderer::transform() const {
-//     mesh->normalMatrix = glm::inverseTranspose(glm::mat3(viewMatrix*mesh->modelMatrix));
-//     glUniformMatrix4fv(glGetUniformLocation(shader->Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(mesh->modelMatrix));
-//     glUniformMatrix3fv(glGetUniformLocation(shader->Program, "normalMatrix"), 1, GL_FALSE, glm::value_ptr(mesh->normalMatrix));
-// }
 
 void Renderer::glfwMouseButtonCallback(GLFWwindow* window, const int button, const int action, int mods) {
     Renderer* self = static_cast<Renderer*>(glfwGetWindowUserPointer(window));

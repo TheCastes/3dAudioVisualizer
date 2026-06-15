@@ -7,5 +7,6 @@ uniform mat4 viewMatrix;
 uniform mat4 projectionMatrix;
 
 void main() {
-    gl_Position =  projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0f);
+    float scale = 0.7;
+    gl_Position =  projectionMatrix * viewMatrix * modelMatrix * vec4(position * scale, 1.0f);
 }

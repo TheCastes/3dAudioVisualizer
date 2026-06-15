@@ -34,17 +34,14 @@ public:
     static void glfwCursorPosCallback(GLFWwindow *window, double x, double y);
 
     GLFWwindow* getWindow() const { return applicationWindow; }
+    glm::mat4 projectionMatrix = glm::perspective(glm::radians(45.0f), (float)screenWidth/(float)screenHeight, 0.1f, 10000.0f);
 private:
-    //GLuint loadShader(const char* shaderSource, int shaderType);
-    void createBuffers(const std::array<float, 9>& triangleVertices);
-
     const int screenWidth = 1280;
     const int screenHeight = 720;
 
     int viewportWidth = 0;
     int viewportHeight = 0;
 
-    glm::mat4 projectionMatrix = glm::perspective(45.0f, (float)screenWidth/(float)screenHeight, 0.1f, 10000.0f);
     glm::mat4 viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 10.0f), glm::vec3(0.0f, 0.0f, -10.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
     GLFWwindow* applicationWindow = nullptr;

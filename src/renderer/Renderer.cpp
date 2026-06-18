@@ -71,20 +71,26 @@ bool Renderer::init() {
     shader = new Shader("../assets/shaders/shader.vert", "../assets/shaders/shader.frag");
     shader->Use();
 
-    mesh = new Mesh(128, 128, 10.0f, 10.0f);
+    mesh = new Mesh(512, 512, 10.0f, 10.0f);
+
+    spectrogramTexture.init();
 
     glClearColor(0.05f, 0.05f, 0.1f, 1.0f);
     std::cout << "Rendering loop avviato...\n";
     return true;
 }
 
-void Renderer::render(const float currentAudioLevel) const {
+void Renderer::render(const float currentAudioLevel, const SpectrogramBuffer& spectrogramBuffer) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
+
+    spectrogramTexture.update(spectrogramBuffer);
+    spectrogramTexture.bind(0);
+
     const int subW = static_cast<int>(viewportWidth  * renderFractionW);
     const int subH = static_cast<int>(viewportHeight * renderFractionH);
     glViewport(viewportWidth - subW, viewportHeight - subH, subW, subH);
 
+    glUniform1i(glGetUniformLocation(shader->Program, "u_spectrogram"), 0);
     glUniform1f(glGetUniformLocation(shader->Program, "u_level"), currentAudioLevel);
     glUniformMatrix4fv(glGetUniformLocation(shader->Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
     glUniformMatrix4fv(glGetUniformLocation(shader->Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));

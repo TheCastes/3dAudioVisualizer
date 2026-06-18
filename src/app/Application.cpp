@@ -85,7 +85,7 @@ void Application::runRenderLoop() {
 
         ui.beginFrame();
         ui.draw();
-        renderer.render(currentAudioLevel);
+        renderer.render(currentAudioLevel, audioEngine.getSpectrogramBuffer());
         ui.render();
         renderer.swapBuffers();
     }

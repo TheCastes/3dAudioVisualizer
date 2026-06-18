@@ -11,6 +11,7 @@
 
 #include "Mesh.h"
 #include "Shader.h"
+#include "SpectrogramTexture.h"
 #include "Trackball.h"
 
 class Renderer {
@@ -24,7 +25,7 @@ public:
     Renderer& operator=(Renderer&&) noexcept = delete;
 
     bool init();
-    void render(float currentAudioLevel) const;
+    void render(float currentAudioLevel, const SpectrogramBuffer& spectrogramBuffer);
     void swapBuffers() const;
     bool shouldClose() const;
 
@@ -53,6 +54,7 @@ private:
     GLFWwindow* applicationWindow = nullptr;
     Shader* shader = nullptr;
     Mesh* mesh = nullptr;
+    SpectrogramTexture spectrogramTexture;
     Trackball trackball;
     GLuint vertexArrayObject = 0;
     GLuint vertexBufferObject = 0;

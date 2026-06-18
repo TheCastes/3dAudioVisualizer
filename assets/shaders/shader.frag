@@ -2,7 +2,12 @@
 
 out vec4 color;
 uniform float u_level;
+uniform sampler2D texSamp;
+
+in vec2 interp_uv;
 
 void main() {
-    color = vec4(u_level, 0.3, 1.0 - u_level, 1.0);
+    vec4 texel = texture(texSamp, interp_uv);
+    vec3 grayColor = vec3(texel.r);
+    color = vec4(grayColor, 1.0);
 }

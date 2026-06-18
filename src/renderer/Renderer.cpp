@@ -18,9 +18,9 @@ Renderer::~Renderer() {
 }
 
 bool Renderer::init() {
-    if (!glfwInit()) { 
-        std::cerr << "GLFW init fallito\n"; 
-        return false; 
+    if (!glfwInit()) {
+        std::cerr << "GLFW init fallito\n";
+        return false;
     }
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -28,11 +28,11 @@ bool Renderer::init() {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     applicationWindow = glfwCreateWindow(screenWidth, screenHeight, "3dAudioVisualizer", nullptr, nullptr);
-    if (!applicationWindow) { 
-        std::cerr << "Creazione finestra fallita\n"; 
+    if (!applicationWindow) {
+        std::cerr << "Creazione finestra fallita\n";
         return false;
     }
-    
+
     glfwMakeContextCurrent(applicationWindow);
 
     if (!gladLoadGL()) {
@@ -40,7 +40,7 @@ bool Renderer::init() {
         glfwDestroyWindow(applicationWindow);
         applicationWindow = nullptr;
         glfwTerminate();
-        return false; 
+        return false;
     }
 
     std::cout << "GLAD OK | OpenGL: " << glGetString(GL_VERSION) << "\n";

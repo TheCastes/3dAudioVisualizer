@@ -1,11 +1,15 @@
 #pragma once
 
+#include <memory>
 #include <string>
 #include <thread>
 
 #include "../audio/AudioEngine.h"
 #include "../renderer/Renderer.h"
 #include "../flocking/Flocking.h"
+#include "../ui/Ui.h"
+
+namespace juce { class FileChooser; }
 
 class Application {
 public:
@@ -17,18 +21,20 @@ public:
     Application(Application&& move) = delete;
     Application& operator=(Application&&) = delete;
 
-    int run(const std::string audioFileToPlay);
+    int run();
 
 
 private:
-    void startJuceAudioThread(const std::string& audioFileToPlay);
+    void startJuceAudioThread();
     void waitUntilAudioIsReady();
+    void openFileDialog();
     void runRenderLoop();
-    void exportSpectrogram(const std::string& audioFileToPlay);
 
     Renderer renderer;
+    Ui ui;
     AudioEngine audioEngine;
     std::thread juceAudioThread;
+    std::unique_ptr<juce::FileChooser> fileChooser;
 
     Flocking flocking;
 };

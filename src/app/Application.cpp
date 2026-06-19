@@ -1,4 +1,5 @@
 #include <juce_core/juce_core.h>
+#include <juce_gui_basics/juce_gui_basics.h>
 #include <chrono>
 #include <iostream>
 #include <string>
@@ -16,8 +17,8 @@ Application::~Application() {
 }
 
 
-int Application::run(const std::string audioFileToPlay) {
-    startJuceAudioThread(audioFileToPlay);
+int Application::run() {
+    startJuceAudioThread();
     waitUntilAudioIsReady();
 
     if (!renderer.init()) {
@@ -34,13 +35,37 @@ int Application::run(const std::string audioFileToPlay) {
     flocking.cleanup();
 
     std::cout << "Chiusura in corso...\n";
-    return 0;
 
+    ui.setBrowseCallback([this]() { openFileDialog(); });
+    ui.setPlayPauseCallback([this]() { audioEngine.togglePlayback(); });
+    ui.setStopCallback([this]() { audioEngine.eject(); });
+
+    runRenderLoop();
+    return 0;
 }
 
 
-void Application::startJuceAudioThread(const std::string& audioFileToPlay) {
-    juceAudioThread = std::thread( [this, audioFileToPlay]() {
+void Application::openFileDialog() {
+    juce::MessageManager::callAsync([this]() {
+        fileChooser = std::make_unique<juce::FileChooser>(
+            "Seleziona una traccia",
+            juce::File(),
+            "*.wav;*.mp3;*.flac;*.m4a;*.ogg;*.aiff");
+
+        constexpr int flags =
+            juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles;
+
+        fileChooser->launchAsync(flags, [this](const juce::FileChooser& chooser) {
+            const juce::File file = chooser.getResult();
+            if (file.existsAsFile())
+                audioEngine.requestLoad(file.getFullPathName().toStdString());
+        });
+    });
+}
+
+
+void Application::startJuceAudioThread() {
+    juceAudioThread = std::thread( [this]() {
 
         juce::ScopedJuceInitialiser_GUI juceInit;
         juce::AudioDeviceManager deviceManager;
@@ -54,14 +79,7 @@ void Application::startJuceAudioThread(const std::string& audioFileToPlay) {
 
         deviceManager.addAudioCallback(&audioEngine);
         deviceManager.restartLastAudioDevice();
-
-        if (audioEngine.loadFile(audioFileToPlay)) {
-            audioEngine.play();
-            std::cout << "Riproduzione: " << audioFileToPlay << "\n";
-        } else {
-            std::cerr << "Impossibile caricare: " << audioFileToPlay << "\n";
-        }
-
+        
         audioEngine.setAudioReady();
         std::cout << "JUCE Audio inizializzato\n";
         juce::MessageManager::getInstance()->runDispatchLoop();
@@ -93,11 +111,21 @@ void Application::runRenderLoop() {
         lastFrame = currentFrame;
 
         flocking.update(audioEngine.getCurrentAudioLevel(), deltaTime);
-
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
         flocking.render(renderer.getViewMatrix(), renderer.getProjectionMatrix());
-
         glfwSwapBuffers(renderer.getWindow());
+
+        const float currentAudioLevel = audioEngine.getCurrentAudioLevel();
+
+        ui.beginFrame();
+        ui.draw({
+            audioEngine.getCurrentTrackName(),
+            audioEngine.isPlaying(),
+            audioEngine.getPositionSeconds(),
+            audioEngine.getLengthSeconds()
+        });
+        renderer.render(currentAudioLevel, audioEngine.getSpectrogramBuffer());
+        ui.render();
+        renderer.swapBuffers();
     }
 }

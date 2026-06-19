@@ -18,7 +18,21 @@ bool AudioEngine::loadFile(const std::string& path) {
     auto newSource = std::make_unique<juce::AudioFormatReaderSource>(reader, true);
     transportSource.setSource(newSource.get(), 0, nullptr, reader->sampleRate);
     readerSource = std::move(newSource);
+
+    {
+        std::lock_guard<std::mutex> lock(trackNameMutex);
+        currentTrackName = file.getFileName().toStdString();
+    }
     return true;
+}
+
+void AudioEngine::requestLoad(const std::string& path) {
+    juce::MessageManager::callAsync([this, path]() {
+        if (loadFile(path)) {
+            transportSource.setPosition(0.0);
+            play();
+        }
+    });
 }
 
 void AudioEngine::play() {
@@ -27,8 +41,43 @@ void AudioEngine::play() {
 void AudioEngine::stop() {
     transportSource.stop();
 }
+void AudioEngine::togglePlayback() {
+    juce::MessageManager::callAsync([this]() {
+        if (readerSource == nullptr) return;
+        if (transportSource.isPlaying())
+            transportSource.stop();
+        else
+            transportSource.start();
+    });
+}
+void AudioEngine::eject() {
+    juce::MessageManager::callAsync([this]() {
+        transportSource.stop();
+        transportSource.setSource(nullptr);
+        readerSource.reset();
+        spectrogramFrameBuffer.clear();
+        stftProcessor.reset();
+        {
+            std::lock_guard<std::mutex> lock(trackNameMutex);
+            currentTrackName.clear();
+        }
+    });
+}
 bool AudioEngine::isPlaying() const {
     return transportSource.isPlaying();
+}
+
+double AudioEngine::getPositionSeconds() const {
+    return transportSource.getCurrentPosition();
+}
+
+double AudioEngine::getLengthSeconds() const {
+    return transportSource.getLengthInSeconds();
+}
+
+std::string AudioEngine::getCurrentTrackName() const {
+    std::lock_guard<std::mutex> lock(trackNameMutex);
+    return currentTrackName;
 }
 
 float AudioEngine::getCurrentAudioLevel() const {
@@ -78,6 +127,13 @@ void AudioEngine::audioDeviceStopped() {
 
 void AudioEngine::audioDeviceIOCallbackWithContext(const float* const*, int, float* const* outputChannelData, int numOutputChannels, int numSamples, const juce::AudioIODeviceCallbackContext&) {
     juce::AudioBuffer<float> buffer(outputChannelData, numOutputChannels, numSamples);
+    
+    if (!transportSource.isPlaying()) {
+        buffer.clear();
+        currentAudioLevel.store(0.0f, std::memory_order_relaxed);
+        return;
+    }
+
     juce::AudioSourceChannelInfo info(&buffer, 0, numSamples);
     transportSource.getNextAudioBlock(info);
 

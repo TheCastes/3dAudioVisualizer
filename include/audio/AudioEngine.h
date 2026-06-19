@@ -24,10 +24,19 @@ public:
     AudioEngine& operator=(AudioEngine&&) = delete;
 
     bool loadFile(const std::string& path);
+    
+    void requestLoad(const std::string& path);
 
     void play();
     void stop();
+    void togglePlayback();
+    void eject();
     bool isPlaying() const;
+
+    double getPositionSeconds() const;
+    double getLengthSeconds() const;
+
+    std::string getCurrentTrackName() const;
 
     float getCurrentAudioLevel() const;
 
@@ -51,6 +60,9 @@ private:
     juce::AudioFormatManager formatManager;
     std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
     juce::AudioTransportSource transportSource;
+
+    mutable std::mutex trackNameMutex;
+    std::string currentTrackName;
 
     std::atomic<float> currentAudioLevel{0.0f};
     std::atomic<bool> audioReadyFlag{false};

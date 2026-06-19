@@ -56,6 +56,7 @@ void AudioEngine::eject() {
         transportSource.setSource(nullptr);
         readerSource.reset();
         spectrogramFrameBuffer.clear();
+        stftProcessor.reset();
         {
             std::lock_guard<std::mutex> lock(trackNameMutex);
             currentTrackName.clear();
@@ -64,6 +65,14 @@ void AudioEngine::eject() {
 }
 bool AudioEngine::isPlaying() const {
     return transportSource.isPlaying();
+}
+
+double AudioEngine::getPositionSeconds() const {
+    return transportSource.getCurrentPosition();
+}
+
+double AudioEngine::getLengthSeconds() const {
+    return transportSource.getLengthInSeconds();
 }
 
 std::string AudioEngine::getCurrentTrackName() const {
@@ -118,15 +127,15 @@ void AudioEngine::audioDeviceStopped() {
 
 void AudioEngine::audioDeviceIOCallbackWithContext(const float* const*, int, float* const* outputChannelData, int numOutputChannels, int numSamples, const juce::AudioIODeviceCallbackContext&) {
     juce::AudioBuffer<float> buffer(outputChannelData, numOutputChannels, numSamples);
-    juce::AudioSourceChannelInfo info(&buffer, 0, numSamples);
-    transportSource.getNextAudioBlock(info);
-
-    // When paused/stopped the transport still emits silent blocks; feeding them
-    // to the STFT would keep scrolling the spectrogram. Freeze instead.
+    
     if (!transportSource.isPlaying()) {
+        buffer.clear();
         currentAudioLevel.store(0.0f, std::memory_order_relaxed);
         return;
     }
+
+    juce::AudioSourceChannelInfo info(&buffer, 0, numSamples);
+    transportSource.getNextAudioBlock(info);
 
     // RMS level
     float sumOfSquares = 0.0f;

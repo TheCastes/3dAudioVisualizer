@@ -17,6 +17,12 @@ public:
             hannWindow[i] = 0.5f * (1.0f - std::cos(2.0f * float(M_PI) * i / (fftSize - 1)));
     }
 
+    void reset() {
+        std::fill(inputRingBuffer, inputRingBuffer + fftSize, 0.0f);
+        ringWritePosition = 0;
+        samplesSinceLastHop = 0;
+    }
+
     void pushSamples(const float* monoSamples, int numSamples) {
         for (int i = 0; i < numSamples; ++i) {
             inputRingBuffer[ringWritePosition] = monoSamples[i];

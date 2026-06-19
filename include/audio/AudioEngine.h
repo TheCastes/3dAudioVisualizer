@@ -33,6 +33,9 @@ public:
     void eject();
     bool isPlaying() const;
 
+    double getPositionSeconds() const;
+    double getLengthSeconds() const;
+
     std::string getCurrentTrackName() const;
 
     float getCurrentAudioLevel() const;

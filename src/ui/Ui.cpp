@@ -4,6 +4,18 @@
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
 
+#include <cstdio>
+
+namespace {
+    std::string formatTime(double seconds) {
+        if (seconds < 0.0) seconds = 0.0;
+        const int total = static_cast<int>(seconds);
+        char buffer[16];
+        std::snprintf(buffer, sizeof(buffer), "%d:%02d", total / 60, total % 60);
+        return buffer;
+    }
+}
+
 Ui::Ui() = default;
 
 Ui::~Ui() {
@@ -43,7 +55,7 @@ void Ui::beginFrame() {
     ImGui::NewFrame();
 }
 
-void Ui::draw(const std::string& trackName, bool isPlaying) {
+void Ui::draw(const PlaybackState& state) {
     ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Always);
     ImGui::SetNextWindowSize(ImVec2(280.0f, 0.0f), ImGuiCond_Always);
     constexpr ImGuiWindowFlags flags =
@@ -51,15 +63,27 @@ void Ui::draw(const std::string& trackName, bool isPlaying) {
 
     ImGui::Begin("3dAudioVisualizer", nullptr, flags);
 
+    const bool hasTrack = !state.trackName.empty();
+
+    if (hasTrack) ImGui::BeginDisabled();
     if (ImGui::Button("Apri file...") && browseCallback)
         browseCallback();
+    if (hasTrack) ImGui::EndDisabled();
 
-    const bool hasTrack = !trackName.empty();
+    ImGui::TextUnformatted(hasTrack ? state.trackName.c_str() : "Nessuna traccia");
+    ImGui::SameLine();
+    const std::string timeText = formatTime(state.positionSeconds) + " / " + formatTime(state.lengthSeconds);
+    ImGui::TextUnformatted(timeText.c_str());
 
-    ImGui::TextWrapped("%s", hasTrack ? trackName.c_str() : "Nessuna traccia");
+    const float fraction = state.lengthSeconds > 0.0
+        ? static_cast<float>(state.positionSeconds / state.lengthSeconds)
+        : 0.0f;
+    ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.45f, 0.70f, 0.50f, 1.0f));
+    ImGui::ProgressBar(fraction, ImVec2(-1.0f, 0.0f), "");
+    ImGui::PopStyleColor();
 
     if (!hasTrack) ImGui::BeginDisabled();
-    if (ImGui::Button(isPlaying ? "Pausa" : "Play") && playPauseCallback)
+    if (ImGui::Button(state.isPlaying ? "Pausa" : "Play") && playPauseCallback)
         playPauseCallback();
     ImGui::SameLine();
     if (ImGui::Button("Stop") && stopCallback)

@@ -8,6 +8,13 @@ struct GLFWwindow;
 
 class Ui {
 public:
+    struct PlaybackState {
+        std::string trackName;
+        bool isPlaying = false;
+        double positionSeconds = 0.0;
+        double lengthSeconds = 0.0;
+    };
+
     Ui();
     ~Ui();
 
@@ -23,7 +30,7 @@ public:
     void setStopCallback(std::function<void()> callback);
 
     void beginFrame();
-    void draw(const std::string& trackName, bool isPlaying);
+    void draw(const PlaybackState& state);
     void render();
 
 private:

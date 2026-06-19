@@ -105,7 +105,12 @@ void Application::runRenderLoop() {
         const float currentAudioLevel = audioEngine.getCurrentAudioLevel();
 
         ui.beginFrame();
-        ui.draw(audioEngine.getCurrentTrackName(), audioEngine.isPlaying());
+        ui.draw({
+            audioEngine.getCurrentTrackName(),
+            audioEngine.isPlaying(),
+            audioEngine.getPositionSeconds(),
+            audioEngine.getLengthSeconds()
+        });
         renderer.render(currentAudioLevel, audioEngine.getSpectrogramBuffer());
         ui.render();
         renderer.swapBuffers();

@@ -77,7 +77,7 @@ bool Renderer::init() {
 
     spectrogramTexture.init();
 
-    glClearColor(0.05f, 0.05f, 0.1f, 1.0f);
+    glClearColor(0.20f, 0.20f, 0.20f, 1.0f);
     std::cout << "Rendering loop avviato...\n";
     return true;
 }

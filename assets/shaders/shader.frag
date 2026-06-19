@@ -31,7 +31,7 @@ vec4 heatmap(float normalizedValue) {
 
     vec3 interpolatedColor = mix( colorStops[stopIndex].color, colorStops[stopIndex + 1].color, interpolationT);
 
-    float alpha = mix(1, 1, 1 - int(normalizedValue==0));
+    float alpha = mix(0, 1, int(normalizedValue>0.0001));
 
     return vec4(interpolatedColor, alpha);
 }

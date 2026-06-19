@@ -7,7 +7,7 @@ bool Flocking::init() {
         return false;
     }
 
-    // TODO ? containment box
+    // TODO expose config params
     boidConfig.fov = 2.0f;
     boidConfig.speed = 1.0f;
     boidConfig.separationWeight = 3.0f;
@@ -15,9 +15,11 @@ bool Flocking::init() {
     boidConfig.alignWeight = 1.0f;
 
     boidSpawner.origin = glm::vec3(0.0f, 0.0f, -40.0f);
-    boidSpawner.count = 1000;
+    boidSpawner.count = 500;
     boidSpawner.radius = 10.0f;
     boidSpawner.Spawn();
+
+    // TODO ? containment box
 
     return true;
 }

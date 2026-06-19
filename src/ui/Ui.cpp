@@ -4,9 +4,6 @@
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
 
-#include <algorithm>
-#include <filesystem>
-
 Ui::Ui() = default;
 
 Ui::~Ui() {
@@ -28,25 +25,16 @@ bool Ui::init(GLFWwindow* window) {
     return true;
 }
 
-void Ui::setLoadCallback(std::function<void(const std::string&)> callback) {
-    loadCallback = std::move(callback);
+void Ui::setBrowseCallback(std::function<void()> callback) {
+    browseCallback = std::move(callback);
 }
 
-void Ui::scanTracks(const std::string& directory) {
-    tracks.clear();
-    selectedTrack = -1;
+void Ui::setPlayPauseCallback(std::function<void()> callback) {
+    playPauseCallback = std::move(callback);
+}
 
-    namespace fs = std::filesystem;
-    std::error_code ec;
-    if (!fs::is_directory(directory, ec)) return;
-
-    for (const auto& entry : fs::directory_iterator(directory, ec)) {
-        if (!entry.is_regular_file()) continue;
-        tracks.push_back({ entry.path().string(), entry.path().filename().string() });
-    }
-
-    std::sort(tracks.begin(), tracks.end(),
-              [](const Track& a, const Track& b) { return a.name < b.name; });
+void Ui::setStopCallback(std::function<void()> callback) {
+    stopCallback = std::move(callback);
 }
 
 void Ui::beginFrame() {
@@ -55,7 +43,7 @@ void Ui::beginFrame() {
     ImGui::NewFrame();
 }
 
-void Ui::draw() {
+void Ui::draw(const std::string& trackName, bool isPlaying) {
     ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Always);
     ImGui::SetNextWindowSize(ImVec2(280.0f, 0.0f), ImGuiCond_Always);
     constexpr ImGuiWindowFlags flags =
@@ -63,26 +51,20 @@ void Ui::draw() {
 
     ImGui::Begin("3dAudioVisualizer", nullptr, flags);
 
-    const char* preview = (selectedTrack >= 0 && selectedTrack < static_cast<int>(tracks.size()))
-        ? tracks[selectedTrack].name.c_str()
-        : "Seleziona una traccia";
+    if (ImGui::Button("Apri file...") && browseCallback)
+        browseCallback();
 
-    if (ImGui::BeginCombo("Traccia", preview)) {
-        for (int i = 0; i < static_cast<int>(tracks.size()); ++i) {
-            const bool isSelected = (i == selectedTrack);
-            if (ImGui::Selectable(tracks[i].name.c_str(), isSelected))
-                selectedTrack = i;
-            if (isSelected)
-                ImGui::SetItemDefaultFocus();
-        }
-        ImGui::EndCombo();
-    }
+    const bool hasTrack = !trackName.empty();
 
-    const bool canLoad = selectedTrack >= 0;
-    if (!canLoad) ImGui::BeginDisabled();
-    if (ImGui::Button("Load") && loadCallback)
-        loadCallback(tracks[selectedTrack].path);
-    if (!canLoad) ImGui::EndDisabled();
+    ImGui::TextWrapped("%s", hasTrack ? trackName.c_str() : "Nessuna traccia");
+
+    if (!hasTrack) ImGui::BeginDisabled();
+    if (ImGui::Button(isPlaying ? "Pausa" : "Play") && playPauseCallback)
+        playPauseCallback();
+    ImGui::SameLine();
+    if (ImGui::Button("Stop") && stopCallback)
+        stopCallback();
+    if (!hasTrack) ImGui::EndDisabled();
 
     ImGui::End();
 }

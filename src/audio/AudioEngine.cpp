@@ -18,6 +18,11 @@ bool AudioEngine::loadFile(const std::string& path) {
     auto newSource = std::make_unique<juce::AudioFormatReaderSource>(reader, true);
     transportSource.setSource(newSource.get(), 0, nullptr, reader->sampleRate);
     readerSource = std::move(newSource);
+
+    {
+        std::lock_guard<std::mutex> lock(trackNameMutex);
+        currentTrackName = file.getFileName().toStdString();
+    }
     return true;
 }
 
@@ -36,8 +41,34 @@ void AudioEngine::play() {
 void AudioEngine::stop() {
     transportSource.stop();
 }
+void AudioEngine::togglePlayback() {
+    juce::MessageManager::callAsync([this]() {
+        if (readerSource == nullptr) return;
+        if (transportSource.isPlaying())
+            transportSource.stop();
+        else
+            transportSource.start();
+    });
+}
+void AudioEngine::eject() {
+    juce::MessageManager::callAsync([this]() {
+        transportSource.stop();
+        transportSource.setSource(nullptr);
+        readerSource.reset();
+        spectrogramFrameBuffer.clear();
+        {
+            std::lock_guard<std::mutex> lock(trackNameMutex);
+            currentTrackName.clear();
+        }
+    });
+}
 bool AudioEngine::isPlaying() const {
     return transportSource.isPlaying();
+}
+
+std::string AudioEngine::getCurrentTrackName() const {
+    std::lock_guard<std::mutex> lock(trackNameMutex);
+    return currentTrackName;
 }
 
 float AudioEngine::getCurrentAudioLevel() const {
@@ -89,6 +120,13 @@ void AudioEngine::audioDeviceIOCallbackWithContext(const float* const*, int, flo
     juce::AudioBuffer<float> buffer(outputChannelData, numOutputChannels, numSamples);
     juce::AudioSourceChannelInfo info(&buffer, 0, numSamples);
     transportSource.getNextAudioBlock(info);
+
+    // When paused/stopped the transport still emits silent blocks; feeding them
+    // to the STFT would keep scrolling the spectrogram. Freeze instead.
+    if (!transportSource.isPlaying()) {
+        currentAudioLevel.store(0.0f, std::memory_order_relaxed);
+        return;
+    }
 
     // RMS level
     float sumOfSquares = 0.0f;

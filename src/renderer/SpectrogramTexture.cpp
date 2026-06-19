@@ -28,11 +28,20 @@ void SpectrogramTexture::update(const SpectrogramBuffer& spectrogramBuffer) {
         return;
     }
 
-    uploadedFrameCount = spectrogramBuffer.getSnapshot(stagingFrames.data(), SpectrogramBuffer::maxFrames);
-    
-    if (uploadedFrameCount <= 0) {
+    const int frameCount = spectrogramBuffer.getSnapshot(stagingFrames.data(), SpectrogramBuffer::maxFrames);
+
+    if (frameCount <= 0) {
+        // Buffer emptied (e.g. eject): wipe the GPU texture so the mesh flattens.
+        if (uploadedFrameCount != 0) {
+            glBindTexture(GL_TEXTURE_2D, textureId);
+            glClearTexImage(textureId, 0, GL_RED, GL_FLOAT, nullptr);
+            glBindTexture(GL_TEXTURE_2D, 0);
+            uploadedFrameCount = 0;
+        }
         return;
     }
+
+    uploadedFrameCount = frameCount;
 
     glBindTexture(GL_TEXTURE_2D, textureId);
 

@@ -88,6 +88,7 @@ target_link_libraries(3dAudioVisualizer PRIVATE
     juce::juce_audio_devices
     juce::juce_audio_formats
     juce::juce_dsp
+    juce::juce_gui_basics
     juce::juce_core
     glfw
     glm::glm

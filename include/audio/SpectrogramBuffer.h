@@ -37,6 +37,10 @@ public:
         return framesToCopy;
     }
 
+    void clear() {
+        totalFramesWritten.store(0, std::memory_order_release);
+    }
+
     int totalFrames() const {
         const uint64_t writeIndexSnapshot = totalFramesWritten.load(std::memory_order_acquire);
         return static_cast<int>(std::min<uint64_t>(writeIndexSnapshot, maxFrames));

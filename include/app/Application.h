@@ -1,11 +1,14 @@
 #pragma once
 
+#include <memory>
 #include <string>
 #include <thread>
 
 #include "../audio/AudioEngine.h"
 #include "../renderer/Renderer.h"
 #include "../ui/Ui.h"
+
+namespace juce { class FileChooser; }
 
 class Application {
 public:
@@ -23,12 +26,14 @@ public:
 private:
     void startJuceAudioThread();
     void waitUntilAudioIsReady();
+    void openFileDialog();
     void runRenderLoop();
 
     Renderer renderer;
     Ui ui;
     AudioEngine audioEngine;
     std::thread juceAudioThread;
+    std::unique_ptr<juce::FileChooser> fileChooser;
 
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;

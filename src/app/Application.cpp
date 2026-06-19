@@ -1,4 +1,5 @@
 #include <juce_core/juce_core.h>
+#include <juce_gui_basics/juce_gui_basics.h>
 #include <chrono>
 #include <iostream>
 #include <string>
@@ -30,11 +31,31 @@ int Application::run() {
         return -1;
     }
 
-    ui.setLoadCallback([this](const std::string& path) { audioEngine.requestLoad(path); });
-    ui.scanTracks("../assets/tracks");
+    ui.setBrowseCallback([this]() { openFileDialog(); });
+    ui.setPlayPauseCallback([this]() { audioEngine.togglePlayback(); });
+    ui.setStopCallback([this]() { audioEngine.eject(); });
 
     runRenderLoop();
     return 0;
+}
+
+
+void Application::openFileDialog() {
+    juce::MessageManager::callAsync([this]() {
+        fileChooser = std::make_unique<juce::FileChooser>(
+            "Seleziona una traccia",
+            juce::File(),
+            "*.wav;*.mp3;*.flac;*.m4a;*.ogg;*.aiff");
+
+        constexpr int flags =
+            juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles;
+
+        fileChooser->launchAsync(flags, [this](const juce::FileChooser& chooser) {
+            const juce::File file = chooser.getResult();
+            if (file.existsAsFile())
+                audioEngine.requestLoad(file.getFullPathName().toStdString());
+        });
+    });
 }
 
 
@@ -84,7 +105,7 @@ void Application::runRenderLoop() {
         const float currentAudioLevel = audioEngine.getCurrentAudioLevel();
 
         ui.beginFrame();
-        ui.draw();
+        ui.draw(audioEngine.getCurrentTrackName(), audioEngine.isPlaying());
         renderer.render(currentAudioLevel, audioEngine.getSpectrogramBuffer());
         ui.render();
         renderer.swapBuffers();

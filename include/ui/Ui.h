@@ -2,7 +2,6 @@
 
 #include <functional>
 #include <string>
-#include <vector>
 
 struct GLFWwindow;
 
@@ -19,24 +18,18 @@ public:
 
     bool init(GLFWwindow* window);
 
-    void setLoadCallback(std::function<void(const std::string&)> callback);
+    void setBrowseCallback(std::function<void()> callback);
+    void setPlayPauseCallback(std::function<void()> callback);
+    void setStopCallback(std::function<void()> callback);
 
-    void scanTracks(const std::string& directory);
-
- 
     void beginFrame();
-    void draw();
+    void draw(const std::string& trackName, bool isPlaying);
     void render();
 
 private:
-    struct Track {
-        std::string path;
-        std::string name;
-    };
-
     bool initialized = false;
 
-    std::function<void(const std::string&)> loadCallback;
-    std::vector<Track> tracks;
-    int selectedTrack = -1;
+    std::function<void()> browseCallback;
+    std::function<void()> playPauseCallback;
+    std::function<void()> stopCallback;
 };

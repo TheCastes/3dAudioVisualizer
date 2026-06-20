@@ -30,17 +30,21 @@ int Application::run() {
         return -1;
     }
 
+    if (!ui.init(renderer.getWindow())) {
+        std::cerr << "UI init fallito\n";
+        return -1;
+    }
+
+    ui.setBrowseCallback([this]() { openFileDialog(); });
+    ui.setPlayPauseCallback([this]() { audioEngine.togglePlayback(); });
+    ui.setStopCallback([this]() { audioEngine.eject(); });
+    ui.setRenderModeCallback([this](int mode) { renderer.setRenderMode(static_cast<RenderMode>(mode)); });
+
     runRenderLoop();
 
     flocking.cleanup();
 
     std::cout << "Chiusura in corso...\n";
-
-    ui.setBrowseCallback([this]() { openFileDialog(); });
-    ui.setPlayPauseCallback([this]() { audioEngine.togglePlayback(); });
-    ui.setStopCallback([this]() { audioEngine.eject(); });
-
-    runRenderLoop();
     return 0;
 }
 
@@ -110,12 +114,14 @@ void Application::runRenderLoop() {
         float deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        flocking.update(audioEngine.getCurrentAudioLevel(), deltaTime);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        flocking.render(renderer.getViewMatrix(), renderer.getProjectionMatrix());
-        glfwSwapBuffers(renderer.getWindow());
+        const bool playing = audioEngine.isPlaying();
 
-        const float currentAudioLevel = audioEngine.getCurrentAudioLevel();
+        if (playing && !flocking.isSpawned())
+            flocking.spawn();
+
+        flocking.update(audioEngine.getCurrentAudioLevel(), deltaTime, playing);
+
+        renderer.render(audioEngine.getCurrentAudioLevel(), audioEngine.getSpectrogramBuffer(), flocking);
 
         ui.beginFrame();
         ui.draw({
@@ -123,9 +129,9 @@ void Application::runRenderLoop() {
             audioEngine.isPlaying(),
             audioEngine.getPositionSeconds(),
             audioEngine.getLengthSeconds()
-        });
-        renderer.render(currentAudioLevel, audioEngine.getSpectrogramBuffer());
+        }, static_cast<int>(renderer.getRenderMode()));
         ui.render();
+
         renderer.swapBuffers();
     }
 }

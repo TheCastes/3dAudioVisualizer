@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "../../include/renderer/Renderer.h"
+#include "../../include/flocking/Flocking.h"
 
 Renderer::Renderer() = default;
 
@@ -11,8 +12,6 @@ Renderer::~Renderer() {
         delete shader;
         shader = nullptr;
     }
-    glDeleteBuffers(1, &vertexBufferObject);
-    glDeleteVertexArrays(1, &vertexArrayObject);
     glfwDestroyWindow(applicationWindow);
     glfwTerminate();
 }
@@ -67,8 +66,8 @@ bool Renderer::init() {
             });
 
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    // glEnable(GL_BLEND);
+    // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     shader = new Shader("../assets/shaders/shader.vert", "../assets/shaders/shader.frag");
     shader->Use();
@@ -82,28 +81,31 @@ bool Renderer::init() {
     return true;
 }
 
-void Renderer::render(const float currentAudioLevel, const SpectrogramBuffer& spectrogramBuffer) {
+void Renderer::render(const float currentAudioLevel, const SpectrogramBuffer& spectrogramBuffer, Flocking& flocking) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    spectrogramTexture.update(spectrogramBuffer);
-    spectrogramTexture.bind(0);
 
     const int subW = static_cast<int>(viewportWidth  * renderFractionW);
     const int subH = static_cast<int>(viewportHeight * renderFractionH);
     glViewport(viewportWidth - subW, viewportHeight - subH, subW, subH);
 
-    glUniform1i(glGetUniformLocation(shader->Program, "u_spectrogram"), 0);
-    glUniform1f(glGetUniformLocation(shader->Program, "u_level"), currentAudioLevel);
-    glUniformMatrix4fv(glGetUniformLocation(shader->Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
-    glUniformMatrix4fv(glGetUniformLocation(shader->Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
-    glUniformMatrix4fv(glGetUniformLocation(shader->Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(mesh->modelMatrix));
+    if (renderMode == RenderMode::SpectrogramPlane) {
+        spectrogramTexture.update(spectrogramBuffer);
+        spectrogramTexture.bind(0);
 
-    // if not at the bottom it moves like a boid lol
-    mesh->Draw();
-    mesh->modelMatrix = trackball.rotationMatrix();
-    mesh->modelMatrix = trackball.rotationMatrix();
-    glUniformMatrix4fv(glGetUniformLocation(shader->Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(mesh->modelMatrix));
-    mesh->Draw();
+        shader->Use();
+
+        mesh->modelMatrix = trackball.rotationMatrix();
+
+        glUniform1i(glGetUniformLocation(shader->Program, "u_spectrogram"), 0);
+        glUniform1f(glGetUniformLocation(shader->Program, "u_level"), currentAudioLevel);
+        glUniformMatrix4fv(glGetUniformLocation(shader->Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
+        glUniformMatrix4fv(glGetUniformLocation(shader->Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
+        glUniformMatrix4fv(glGetUniformLocation(shader->Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(mesh->modelMatrix));
+
+        mesh->Draw();
+    } else if (flocking.isSpawned()) {
+        flocking.render(viewMatrix, projectionMatrix);
+    }
 }
 
 void Renderer::swapBuffers() const {
@@ -120,8 +122,8 @@ bool Renderer::cursorToSubViewport(const double x, const double y, float& localX
     glfwGetWindowSize(applicationWindow, &winW, &winH);
     subW = static_cast<int>(winW * renderFractionW);
     subH = static_cast<int>(winH * renderFractionH);
-    localX = static_cast<float>(x) - static_cast<float>(winW - subW); // right aligned
-    localY = static_cast<float>(y);                                   // top aligned
+    localX = static_cast<float>(x) - static_cast<float>(winW - subW);
+    localY = static_cast<float>(y);
     return localX >= 0.0f && localX <= static_cast<float>(subW)
         && localY >= 0.0f && localY <= static_cast<float>(subH);
 }
@@ -135,7 +137,7 @@ void Renderer::glfwMouseButtonCallback(GLFWwindow* window, const int button, con
     float localX, localY;
     int subW, subH;
     const bool insideViewport = self->cursorToSubViewport(x, y, localX, localY, subW, subH);
-    
+
     if (action == GLFW_PRESS && insideViewport)
         self->trackball.mouseDown(localX, localY, subW, subH);
     else if (action == GLFW_RELEASE)
@@ -144,14 +146,21 @@ void Renderer::glfwMouseButtonCallback(GLFWwindow* window, const int button, con
 
 void Renderer::glfwCursorPosCallback(GLFWwindow* window, const double x, const double y) {
     Renderer* self = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
-    self->trackball.mouseMove(static_cast<float>(x), static_cast<float>(y), self->viewportWidth, self->viewportHeight);
     float localX, localY;
     int subW, subH;
-    self->cursorToSubViewport(x, y, localX, localY, subW, subH);
-    self->trackball.mouseMove(localX, localY, subW, subH);
+    if (self->cursorToSubViewport(x, y, localX, localY, subW, subH))
+        self->trackball.mouseMove(localX, localY, subW, subH);
 }
 
 void Renderer::glfwKeyCallback(GLFWwindow* window, const int key, int scancode, const int action, int mods) {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GLFW_TRUE);
+}
+
+void Renderer::setRenderMode(RenderMode mode) {
+    renderMode = mode;
+}
+
+RenderMode Renderer::getRenderMode() const {
+    return renderMode;
 }

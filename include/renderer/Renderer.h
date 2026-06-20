@@ -4,7 +4,6 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include <array>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -13,6 +12,10 @@
 #include "Shader.h"
 #include "SpectrogramTexture.h"
 #include "Trackball.h"
+
+class Flocking;
+
+enum class RenderMode { SpectrogramPlane, Boids };
 
 class Renderer {
 public:
@@ -25,12 +28,14 @@ public:
     Renderer& operator=(Renderer&&) noexcept = delete;
 
     bool init();
-    void render(float currentAudioLevel, const SpectrogramBuffer& spectrogramBuffer);
+    void render(float currentAudioLevel, const SpectrogramBuffer& spectrogramBuffer, Flocking& flocking);
     void swapBuffers() const;
     bool shouldClose() const;
 
-    static void glfwMouseButtonCallback(GLFWwindow *window, int button, int action, int mods);
+    void setRenderMode(RenderMode mode);
+    RenderMode getRenderMode() const;
 
+    static void glfwMouseButtonCallback(GLFWwindow *window, int button, int action, int mods);
     static void glfwCursorPosCallback(GLFWwindow *window, double x, double y);
 
     GLFWwindow* getWindow() const { return applicationWindow; }
@@ -38,12 +43,11 @@ public:
     const glm::mat4& getProjectionMatrix() const { return projectionMatrix; }
 private:
     //GLuint loadShader(const char* shaderSource, int shaderType);
-    void createBuffers(const std::array<float, 9>& triangleVertices);
+    // void createBuffers(const std::array<float, 9>& triangleVertices);
     static void glfwKeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
 
-    GLFWwindow* getWindow() const { return applicationWindow; }
     glm::mat4 projectionMatrix = glm::mat4(1.0f);
-private:
+
     const int screenWidth = 1280;
     const int screenHeight = 720;
 
@@ -62,7 +66,6 @@ private:
     Mesh* mesh = nullptr;
     SpectrogramTexture spectrogramTexture;
     Trackball trackball;
-    GLuint vertexArrayObject = 0;
-    GLuint vertexBufferObject = 0;
     bool isInitialized = false;
+    RenderMode renderMode = RenderMode::Boids;
 };

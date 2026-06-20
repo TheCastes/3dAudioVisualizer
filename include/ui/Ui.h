@@ -28,9 +28,10 @@ public:
     void setBrowseCallback(std::function<void()> callback);
     void setPlayPauseCallback(std::function<void()> callback);
     void setStopCallback(std::function<void()> callback);
+    void setRenderModeCallback(std::function<void(int)> callback);
 
     void beginFrame();
-    void draw(const PlaybackState& state);
+    void draw(const PlaybackState& state, int renderMode);
     void render();
 
 private:
@@ -39,4 +40,5 @@ private:
     std::function<void()> browseCallback;
     std::function<void()> playPauseCallback;
     std::function<void()> stopCallback;
+    std::function<void(int)> renderModeCallback;
 };

@@ -49,13 +49,17 @@ void Ui::setStopCallback(std::function<void()> callback) {
     stopCallback = std::move(callback);
 }
 
+void Ui::setRenderModeCallback(std::function<void(int)> callback) {
+    renderModeCallback = std::move(callback);
+}
+
 void Ui::beginFrame() {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 }
 
-void Ui::draw(const PlaybackState& state) {
+void Ui::draw(const PlaybackState& state, int renderMode) {
     ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Always);
     ImGui::SetNextWindowSize(ImVec2(280.0f, 0.0f), ImGuiCond_Always);
     constexpr ImGuiWindowFlags flags =
@@ -89,6 +93,14 @@ void Ui::draw(const PlaybackState& state) {
     if (ImGui::Button("Stop") && stopCallback)
         stopCallback();
     if (!hasTrack) ImGui::EndDisabled();
+
+    ImGui::Separator();
+    ImGui::Text("Rendering");
+    if (ImGui::RadioButton("Spectrogram", renderMode == 0) && renderModeCallback)
+        renderModeCallback(0);
+    ImGui::SameLine();
+    if (ImGui::RadioButton("Boids", renderMode == 1) && renderModeCallback)
+        renderModeCallback(1);
 
     ImGui::End();
 }

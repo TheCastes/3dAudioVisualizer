@@ -36,5 +36,9 @@ private:
     std::thread juceAudioThread;
     std::unique_ptr<juce::FileChooser> fileChooser;
 
+    float deltaTime = 0.0f;
+    float lastFrame = 0.0f;
+    float currentFrame = 0.0f;
+
     Flocking flocking;
 };

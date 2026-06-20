@@ -27,6 +27,7 @@ int Application::run() {
     }
 
     if (!flocking.init()) {
+        std::cerr << "Flocking init fallito\n";
         return -1;
     }
 
@@ -106,12 +107,10 @@ void Application::waitUntilAudioIsReady() {
 
 
 void Application::runRenderLoop() {
-    float lastFrame = 0.0f;
-
     while (!renderer.shouldClose()) {
         glfwPollEvents();
-        float currentFrame = glfwGetTime();
-        float deltaTime = currentFrame - lastFrame;
+        currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
         const bool playing = audioEngine.isPlaying();
@@ -121,7 +120,6 @@ void Application::runRenderLoop() {
 
         flocking.update(audioEngine.getCurrentAudioLevel(), deltaTime, playing);
 
-        renderer.render(audioEngine.getCurrentAudioLevel(), audioEngine.getSpectrogramBuffer(), flocking);
 
         ui.beginFrame();
         ui.draw({
@@ -130,6 +128,8 @@ void Application::runRenderLoop() {
             audioEngine.getPositionSeconds(),
             audioEngine.getLengthSeconds()
         }, static_cast<int>(renderer.getRenderMode()));
+
+        renderer.render(audioEngine.getCurrentAudioLevel(), audioEngine.getSpectrogramBuffer(), flocking);
         ui.render();
 
         renderer.swapBuffers();

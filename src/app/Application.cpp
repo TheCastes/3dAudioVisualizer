@@ -38,7 +38,10 @@ int Application::run() {
 
     ui.setBrowseCallback([this]() { openFileDialog(); });
     ui.setPlayPauseCallback([this]() { audioEngine.togglePlayback(); });
-    ui.setStopCallback([this]() { audioEngine.eject(); });
+    ui.setStopCallback([this]() {
+        audioEngine.eject();
+        flocking.resetPositions();
+    });
     ui.setRenderModeCallback([this](int mode) { renderer.setRenderMode(static_cast<RenderMode>(mode)); });
 
     runRenderLoop();

@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "Boid.h"
+#include "BoidMesh.h"
 #include "../renderer/Shader.h"
 
 class BoidRenderer {
@@ -23,12 +24,9 @@ public:
     void cleanup();
 
 private:
-    GLuint VAO = 0;
-    GLuint VBO = 0;
-    int vertexCount = 0;
+    BoidMesh* boidMesh = nullptr;
     Shader* shader = nullptr;
     bool isInitialized = false;
 
-    void createBoidMesh();
     glm::mat4 calculateModelMatrix(const Boid& boid) const;
 };

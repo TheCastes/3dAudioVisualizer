@@ -29,6 +29,14 @@ void BoidSpawner::Cleanup() {
     boids.clear();
 }
 
+void BoidSpawner::ResetPositions() {
+    for (Boid* boid : boids) {
+        boid->position = origin + RandomPointInSphere(radius);
+        glm::vec3 lookTarget = origin + RandomPointInSphere(radius);
+        boid->direction = glm::normalize(lookTarget - boid->position);
+    }
+}
+
 glm::vec3 BoidSpawner::RandomPointInSphere(float radius) {
     float x = (float)std::rand() / RAND_MAX * 2.0f - 1.0f;
     float y = (float)std::rand() / RAND_MAX * 2.0f - 1.0f;

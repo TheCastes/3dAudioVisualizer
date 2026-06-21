@@ -11,6 +11,7 @@ public:
     bool isSpawned() const;
     void update(float currentAudioLevel, float deltaTime, bool isPlaying);
     void render(const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix);
+    void resetPositions();
     void cleanup();
 
 private:

@@ -48,6 +48,10 @@ void Flocking::render(const glm::mat4& viewMatrix, const glm::mat4& projectionMa
     boidRenderer.render(boidSpawner.boids, viewMatrix, projectionMatrix);
 }
 
+void Flocking::resetPositions() {
+    boidSpawner.ResetPositions();
+}
+
 void Flocking::cleanup() {
     boidSpawner.Cleanup();
     boidRenderer.cleanup();

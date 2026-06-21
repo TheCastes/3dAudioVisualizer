@@ -61,6 +61,7 @@ set(INCLUDE_FILES
     include/flocking/Boid.h
     include/flocking/BoidSpawner.h
     include/flocking/BoidRenderer.h
+    include/flocking/BoidMesh.h
     include/flocking/Flocking.h
     include/ui/Ui.h
 )
@@ -75,6 +76,7 @@ set(SOURCE_FILES
     src/renderer/Trackball.cpp
     src/flocking/BoidSpawner.cpp
     src/flocking/BoidRenderer.cpp
+    src/flocking/BoidMesh.cpp
     src/flocking/Flocking.cpp
     src/ui/Ui.cpp
 )

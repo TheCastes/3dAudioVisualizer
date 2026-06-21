@@ -14,6 +14,7 @@ struct BoidSpawner {
 
     void Spawn();
     void Update(const BoidConfig& config, float deltaTime);
+    void ResetPositions();
     void Cleanup();
 
 private:

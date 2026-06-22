@@ -1,35 +1,16 @@
-/*
-Shader class
-- loading Shader source code, Shader Program creation
-
-N.B. ) adaptation of https://github.com/JoeyDeVries/LearnOpenGL/blob/master/includes/learnopengl/shader.h
-
-author: Davide Gadia
-
-Real-Time Graphics Programming - a.a. 2025/2026
-Master degree in Computer Science
-Universita' degli Studi di Milano
-*/
-
 #pragma once
 
-// Std. Includes
 #include <string>
 #include <fstream>
 #include <sstream>
 #include <iostream>
 
-/////////////////// SHADER class ///////////////////////
+#include <glm/gtc/type_ptr.hpp>
+
 class Shader
 {
 public:
-    GLuint Program;
-
-    //////////////////////////////////////////
-
-    //constructor
-    Shader(const GLchar* vertexPath, const GLchar* fragmentPath)
-    {
+    Shader(const GLchar* vertexPath, const GLchar* fragmentPath) {
         // Step 1: we retrieve shaders source code from provided filepaths
         std::string vertexCode;
         std::string fragmentCode;
@@ -39,8 +20,7 @@ public:
         // ensure ifstream objects can throw exceptions:
         vShaderFile.exceptions (std::ifstream::failbit | std::ifstream::badbit);
         fShaderFile.exceptions (std::ifstream::failbit | std::ifstream::badbit);
-        try
-        {
+        try {
             // Open files
             vShaderFile.open(vertexPath);
             fShaderFile.open(fragmentPath);
@@ -54,9 +34,7 @@ public:
             // Convert stream into string
             vertexCode = vShaderStream.str();
             fragmentCode = fShaderStream.str();
-        }
-        catch (std::ifstream::failure const&)
-        {
+        } catch (std::ifstream::failure const&) {
             std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ\n";
         }
 
@@ -91,36 +69,51 @@ public:
         glDeleteShader(fragment);
     }
 
-    //////////////////////////////////////////
 
-    // We activate the Shader Program as part of the current rendering process
-    void Use() { glUseProgram(this->Program); }
+    ~Shader() {
+        glDeleteProgram(this->Program);
+    }
 
-    // We delete the Shader Program when application closes
-    void Delete() { glDeleteProgram(this->Program); }
+    Shader(const Shader& copy) = delete;
+    Shader& operator=(const Shader&) = delete;
+
+	void Use() {
+		glUseProgram(this->Program);
+	}
+
+    void set(const std::string& name, int value) {
+		glUniform1i(location(name), value);
+	}
+    void set(const std::string& name, float value) {
+		glUniform1f(location(name), value);
+	}
+    void set(const std::string& name, const glm::mat4& value) {
+		glUniformMatrix4fv(location(name), 1, GL_FALSE, glm::value_ptr(value));
+	}
 
 private:
-    //////////////////////////////////////////
+    GLuint Program;
+
+    GLint location(const std::string& name) {
+        return glGetUniformLocation(Program, name.c_str());
+    }
+
+
 
     // Check compilation and linking errors
-    void checkCompileErrors(GLuint shader, std::string type)
-	{
+    void checkCompileErrors(GLuint shader, std::string type) {
 		GLint success;
 		GLchar infoLog[1024];
-		if(type != "PROGRAM")
-		{
+		if(type != "PROGRAM") {
 			glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-			if(!success)
-			{
+			if(!success) {
 				glGetShaderInfoLog(shader, 1024, NULL, infoLog);
                 std::cout << "| ERROR::::SHADER-COMPILATION-ERROR of type: " << type << "|\n" << infoLog << "\n| -- --------------------------------------------------- -- |\n";
 			}
 		}
-		else
-		{
+		else {
 			glGetProgramiv(shader, GL_LINK_STATUS, &success);
-			if(!success)
-			{
+			if(!success) {
 				glGetProgramInfoLog(shader, 1024, NULL, infoLog);
                 std::cout << "| ERROR::::PROGRAM-LINKING-ERROR of type: " << type << "|\n" << infoLog << "\n| -- --------------------------------------------------- -- |\n";
 			}

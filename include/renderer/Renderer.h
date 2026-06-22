@@ -5,12 +5,12 @@
 #include <GLFW/glfw3.h>
 
 #include <array>
+#include <memory>
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 #include "Mesh.h"
-#include "Shader.h"
+#include "ShaderLibrary.h"
 #include "SpectrogramTexture.h"
 #include "Trackball.h"
 
@@ -36,6 +36,11 @@ public:
     static void glfwKeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
 
     GLFWwindow* getWindow() const { return applicationWindow; }
+
+    void setActiveShader(int index) { shaderLibrary.setActive(index); }
+    int activeShaderIndex() const { return shaderLibrary.activeIndex(); }
+    const std::vector<std::string>& shaderNames() const { return shaderLibrary.names(); }
+
     glm::mat4 projectionMatrix = glm::mat4(1.0f);
 private:
     const int screenWidth = 1280;
@@ -52,11 +57,9 @@ private:
     glm::mat4 viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 10.0f), glm::vec3(0.0f, 0.0f, -10.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
     GLFWwindow* applicationWindow = nullptr;
-    Shader* shader = nullptr;
-    Mesh* mesh = nullptr;
-    SpectrogramTexture spectrogramTexture;
+    ShaderLibrary shaderLibrary;
+    std::unique_ptr<Mesh> mesh;
+    std::unique_ptr<SpectrogramTexture> spectrogramTexture;
     Trackball trackball;
-    GLuint vertexArrayObject = 0;
-    GLuint vertexBufferObject = 0;
     bool isInitialized = false;
 };

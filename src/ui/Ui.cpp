@@ -49,13 +49,17 @@ void Ui::setStopCallback(std::function<void()> callback) {
     stopCallback = std::move(callback);
 }
 
+void Ui::setShaderCallback(std::function<void(int)> callback) {
+    shaderCallback = std::move(callback);
+}
+
 void Ui::beginFrame() {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 }
 
-void Ui::draw(const PlaybackState& state) {
+void Ui::draw(const PlaybackState& state, int shaderIndex) {
     ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Always);
     ImGui::SetNextWindowSize(ImVec2(280.0f, 0.0f), ImGuiCond_Always);
     constexpr ImGuiWindowFlags flags =
@@ -90,6 +94,13 @@ void Ui::draw(const PlaybackState& state) {
         stopCallback();
     if (!hasTrack) ImGui::EndDisabled();
 
+    ImGui::Separator();
+    ImGui::Text("Rendering");
+    if (ImGui::RadioButton("heatmap", shaderIndex == 0) && shaderCallback)
+        shaderCallback(0);
+    ImGui::SameLine();
+    if (ImGui::RadioButton("greyscale", shaderIndex == 1) && shaderCallback)
+        shaderCallback(1);
     ImGui::End();
 }
 

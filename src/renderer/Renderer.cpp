@@ -6,13 +6,9 @@ Renderer::Renderer() = default;
 
 Renderer::~Renderer() {
     if (!isInitialized) return;
-    if (shader) {
-        shader->Delete();
-        delete shader;
-        shader = nullptr;
-    }
-    glDeleteBuffers(1, &vertexBufferObject);
-    glDeleteVertexArrays(1, &vertexArrayObject);
+    mesh.reset();
+    shaderLibrary.clear();
+    spectrogramTexture.reset();
     glfwDestroyWindow(applicationWindow);
     glfwTerminate();
 }
@@ -70,34 +66,38 @@ bool Renderer::init() {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    shader = new Shader("../assets/shaders/shader.vert", "../assets/shaders/shader.frag");
-    shader->Use();
+    shaderLibrary.add("Displacement Heatmap", "../assets/shaders/displacement.vert", "../assets/shaders/heatmap.frag");
+    shaderLibrary.add("Displacement B&W", "../assets/shaders/displacement.vert", "../assets/shaders/greyscale.frag");
 
-    mesh = new Mesh(512, 512, 10.0f, 10.0f);
+    mesh = std::make_unique<Mesh>(512, 512, 10, 10);
 
-    spectrogramTexture.init();
+    spectrogramTexture = std::make_unique<SpectrogramTexture>();
+    spectrogramTexture->init();
 
     glClearColor(0.20f, 0.20f, 0.20f, 1.0f);
     std::cout << "Rendering loop avviato...\n";
+    isInitialized = true;
     return true;
 }
 
 void Renderer::render(const float currentAudioLevel, const SpectrogramBuffer& spectrogramBuffer) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    spectrogramTexture.update(spectrogramBuffer);
-    spectrogramTexture.bind(0);
+    spectrogramTexture->update(spectrogramBuffer);
+    spectrogramTexture->bind(0);
 
     const int subW = static_cast<int>(viewportWidth  * renderFractionW);
     const int subH = static_cast<int>(viewportHeight * renderFractionH);
     glViewport(viewportWidth - subW, viewportHeight - subH, subW, subH);
 
-    glUniform1i(glGetUniformLocation(shader->Program, "u_spectrogram"), 0);
-    glUniform1f(glGetUniformLocation(shader->Program, "u_level"), currentAudioLevel);
-    glUniformMatrix4fv(glGetUniformLocation(shader->Program, "projectionMatrix"), 1, GL_FALSE, glm::value_ptr(projectionMatrix));
-    glUniformMatrix4fv(glGetUniformLocation(shader->Program, "viewMatrix"), 1, GL_FALSE, glm::value_ptr(viewMatrix));
+    Shader& shader = shaderLibrary.active();
+    shader.Use();
+    shader.set("spectrogram", 0);
+    shader.set("level", currentAudioLevel);
+    shader.set("projectionMatrix", projectionMatrix);
+    shader.set("viewMatrix", viewMatrix);
     mesh->modelMatrix = trackball.rotationMatrix();
-    glUniformMatrix4fv(glGetUniformLocation(shader->Program, "modelMatrix"), 1, GL_FALSE, glm::value_ptr(mesh->modelMatrix));
+    shader.set("modelMatrix", mesh->modelMatrix);
     mesh->Draw();
 }
 

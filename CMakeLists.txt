@@ -56,6 +56,7 @@ set(INCLUDE_FILES
     include/renderer/Renderer.h
     include/renderer/Mesh.h
     include/renderer/Shader.h
+    include/renderer/ShaderLibrary.h
     include/renderer/SpectrogramTexture.h
     include/renderer/Trackball.h
     include/ui/Ui.h

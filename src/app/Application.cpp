@@ -34,6 +34,7 @@ int Application::run() {
     ui.setBrowseCallback([this]() { openFileDialog(); });
     ui.setPlayPauseCallback([this]() { audioEngine.togglePlayback(); });
     ui.setStopCallback([this]() { audioEngine.eject(); });
+    ui.setShaderCallback([this](int shaderIndex) { renderer.setActiveShader(shaderIndex); });
 
     runRenderLoop();
     return 0;
@@ -110,9 +111,10 @@ void Application::runRenderLoop() {
             audioEngine.isPlaying(),
             audioEngine.getPositionSeconds(),
             audioEngine.getLengthSeconds()
-        });
+        }, renderer.activeShaderIndex());
         renderer.render(currentAudioLevel, audioEngine.getSpectrogramBuffer());
         ui.render();
+
         renderer.swapBuffers();
     }
 }

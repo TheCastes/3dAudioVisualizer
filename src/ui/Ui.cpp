@@ -49,6 +49,10 @@ void Ui::setStopCallback(std::function<void()> callback) {
     stopCallback = std::move(callback);
 }
 
+void Ui::setColormapCallback(std::function<void(int)> callback) {
+    colormapCallback = std::move(callback);
+}
+
 void Ui::setShaderCallback(std::function<void(int)> callback) {
     shaderCallback = std::move(callback);
 }
@@ -59,7 +63,8 @@ void Ui::beginFrame() {
     ImGui::NewFrame();
 }
 
-void Ui::draw(const PlaybackState& state, int shaderIndex) {
+void Ui::draw(const PlaybackState& state, int shaderIndex,
+              const std::vector<Colormap>& colormaps, int colormapIndex) {
     ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Always);
     ImGui::SetNextWindowSize(ImVec2(280.0f, 0.0f), ImGuiCond_Always);
     constexpr ImGuiWindowFlags flags =
@@ -101,6 +106,24 @@ void Ui::draw(const PlaybackState& state, int shaderIndex) {
     ImGui::SameLine();
     if (ImGui::RadioButton("greyscale", shaderIndex == 1) && shaderCallback)
         shaderCallback(1);
+
+    if (shaderIndex == 0 && !colormaps.empty()) {
+        ImGui::Text("Colormap");
+        const char* currentName = colormaps[colormapIndex].name.c_str();
+        if (ImGui::BeginCombo("##colormap", currentName)) {
+            for (int i = 0; i < static_cast<int>(colormaps.size()); ++i) {
+                bool isSelected = (colormapIndex == i);
+                if (ImGui::Selectable(colormaps[i].name.c_str(), isSelected)) {
+                    if (colormapCallback)
+                        colormapCallback(i);
+                }
+                if (isSelected)
+                    ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+    }
+
     ImGui::End();
 }
 

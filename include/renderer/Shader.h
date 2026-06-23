@@ -90,6 +90,12 @@ public:
     void set(const std::string& name, const glm::mat4& value) {
 		glUniformMatrix4fv(location(name), 1, GL_FALSE, glm::value_ptr(value));
 	}
+    void set(const std::string& name, const float* values, int count) {
+		glUniform1fv(location(name), count, values);
+	}
+    void set(const std::string& name, const glm::vec3* values, int count) {
+		glUniform3fv(location(name), count, glm::value_ptr(values[0]));
+	}
 
 private:
     GLuint Program;

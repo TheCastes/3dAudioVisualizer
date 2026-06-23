@@ -6,29 +6,22 @@ in vec2 interp_uv;
 in vec4 texel;
 
 
-const struct ColorStop { float position; vec3 color; };
 const int MAX_STOPS = 5;
-const ColorStop colorStops[MAX_STOPS] = ColorStop[MAX_STOPS] (
-    ColorStop( 0.00, vec3(0.0, 0.0, 0.0) ),
-    ColorStop( 0.25, vec3(0.0, 0.0, 1.0) ),
-    ColorStop( 0.50, vec3(0.0, 1.0, 1.0) ),
-    ColorStop( 0.75, vec3(1.0, 1.0, 0.0) ),
-    ColorStop( 1.00, vec3(1.0, 0.0, 0.0) )
-);
+
+uniform float colorStopPositions[MAX_STOPS];
+uniform vec3  colorStopColors[MAX_STOPS];
 
 vec4 heatmap(float normalizedValue) {
     normalizedValue = clamp(normalizedValue, 0.0, 1.0);
 
-    int stopCount = colorStops.length();
-
     int stopIndex = 0;
-    while (stopIndex < stopCount - 2 && normalizedValue > colorStops[stopIndex + 1].position) {
+    while (stopIndex < MAX_STOPS - 2 && normalizedValue > colorStopPositions[stopIndex + 1]) {
         ++stopIndex;
     }
 
-    float interpolationT = (normalizedValue - colorStops[stopIndex].position) / (colorStops[stopIndex + 1].position - colorStops[stopIndex].position);
+    float interpolationT = (normalizedValue - colorStopPositions[stopIndex]) / (colorStopPositions[stopIndex + 1] - colorStopPositions[stopIndex]);
 
-    vec3 interpolatedColor = mix( colorStops[stopIndex].color, colorStops[stopIndex + 1].color, interpolationT);
+    vec3 interpolatedColor = mix(colorStopColors[stopIndex], colorStopColors[stopIndex + 1], interpolationT);
 
     float alpha = mix(0, 1, int(normalizedValue>0.0001));
 

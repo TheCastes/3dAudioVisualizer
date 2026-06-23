@@ -2,6 +2,9 @@
 
 #include <functional>
 #include <string>
+#include <vector>
+
+#include "../renderer/Colormap.h"
 
 struct GLFWwindow;
 
@@ -29,9 +32,11 @@ public:
     void setPlayPauseCallback(std::function<void()> callback);
     void setStopCallback(std::function<void()> callback);
     void setShaderCallback(std::function<void(int)> callback);
+    void setColormapCallback(std::function<void(int)> callback);
 
     void beginFrame();
-    void draw(const PlaybackState& state, int shaderIndex);
+    void draw(const PlaybackState& state, int shaderIndex,
+              const std::vector<Colormap>& colormaps, int colormapIndex);
     void render();
 
 private:
@@ -41,4 +46,5 @@ private:
     std::function<void()> playPauseCallback;
     std::function<void()> stopCallback;
     std::function<void(int)> shaderCallback;
+    std::function<void(int)> colormapCallback;
 };

@@ -35,6 +35,7 @@ int Application::run() {
     ui.setPlayPauseCallback([this]() { audioEngine.togglePlayback(); });
     ui.setStopCallback([this]() { audioEngine.eject(); });
     ui.setShaderCallback([this](int shaderIndex) { renderer.setActiveShader(shaderIndex); });
+    ui.setColormapCallback([this](int colormapIndex) { renderer.setActiveColormap(colormapIndex); });
 
     runRenderLoop();
     return 0;
@@ -111,7 +112,7 @@ void Application::runRenderLoop() {
             audioEngine.isPlaying(),
             audioEngine.getPositionSeconds(),
             audioEngine.getLengthSeconds()
-        }, renderer.activeShaderIndex());
+        }, renderer.activeShaderIndex(), renderer.colormaps(), renderer.getActiveColormapIndex());
         renderer.render(currentAudioLevel, audioEngine.getSpectrogramBuffer());
         ui.render();
 

@@ -9,6 +9,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "Colormap.h"
 #include "Mesh.h"
 #include "ShaderLibrary.h"
 #include "SpectrogramTexture.h"
@@ -41,6 +42,11 @@ public:
     int activeShaderIndex() const { return shaderLibrary.activeIndex(); }
     const std::vector<std::string>& shaderNames() const { return shaderLibrary.names(); }
 
+    void setActiveColormap(int index) { activeColormapIndex = index; }
+    int getActiveColormapIndex() const { return activeColormapIndex; }
+    const std::vector<Colormap>& colormaps() const { return colormapList; }
+    void addColormap(Colormap cm);
+
     glm::mat4 projectionMatrix = glm::mat4(1.0f);
 private:
     const int screenWidth = 1280;
@@ -62,4 +68,7 @@ private:
     std::unique_ptr<SpectrogramTexture> spectrogramTexture;
     Trackball trackball;
     bool isInitialized = false;
+
+    std::vector<Colormap> colormapList = defaultColormaps();
+    int activeColormapIndex = 0;
 };

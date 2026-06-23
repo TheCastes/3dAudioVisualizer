@@ -94,6 +94,13 @@ void Renderer::render(const float currentAudioLevel, const SpectrogramBuffer& sp
     shader.Use();
     shader.set("spectrogram", 0);
     shader.set("level", currentAudioLevel);
+
+    if (shaderLibrary.activeIndex() == 0 && !colormapList.empty()) {
+        const Colormap& cm = colormapList[activeColormapIndex];
+        shader.set("colorStopPositions", cm.positions.data(), 5);
+        shader.set("colorStopColors", cm.colors.data(), 5);
+    }
+
     shader.set("projectionMatrix", projectionMatrix);
     shader.set("viewMatrix", viewMatrix);
     mesh->modelMatrix = trackball.rotationMatrix();
@@ -149,3 +156,8 @@ void Renderer::glfwKeyCallback(GLFWwindow* window, const int key, int scancode, 
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
+
+// this might be useful to let users import their own colormaps but who cares 
+// void Renderer::addColormap(Colormap cm) {
+//     colormapList.push_back(std::move(cm));
+// }

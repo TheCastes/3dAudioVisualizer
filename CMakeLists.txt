@@ -55,6 +55,7 @@ set(INCLUDE_FILES
     include/audio/SpectrogramExporter.h
     include/renderer/Renderer.h
     include/renderer/Mesh.h
+    include/renderer/GridMesh.h
     include/renderer/Shader.h
     include/renderer/ShaderLibrary.h
     include/renderer/SpectrogramTexture.h
@@ -69,6 +70,7 @@ set(SOURCE_FILES
     src/audio/SpectrogramExporter.cpp
     src/renderer/Renderer.cpp
     src/renderer/Mesh.cpp
+    src/renderer/GridMesh.cpp
     src/renderer/SpectrogramTexture.cpp
     src/renderer/Trackball.cpp
     src/ui/Ui.cpp

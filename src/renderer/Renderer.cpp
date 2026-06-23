@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "../../include/renderer/Renderer.h"
+#include "../../include/renderer/GridMesh.h"
 
 Renderer::Renderer() = default;
 
@@ -69,7 +70,7 @@ bool Renderer::init() {
     shaderLibrary.add("Displacement Heatmap", "../assets/shaders/displacement.vert", "../assets/shaders/heatmap.frag");
     shaderLibrary.add("Displacement B&W", "../assets/shaders/displacement.vert", "../assets/shaders/greyscale.frag");
 
-    mesh = std::make_unique<Mesh>(512, 512, 10, 10);
+    mesh = std::make_unique<GridMesh>(512, 512, 10, 10);
 
     spectrogramTexture = std::make_unique<SpectrogramTexture>();
     spectrogramTexture->init();

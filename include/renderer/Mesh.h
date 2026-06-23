@@ -1,48 +1,23 @@
 #pragma once
 
-#include <vector>
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
-// data structure for vertices
-struct Vertex {
-    // vertex coordinates
-    glm::vec3 Position;
-    // Normal
-    glm::vec3 Normal;
-    // Texture coordinates
-    glm::vec2 TexCoords;
-    // Tangent
-    glm::vec3 Tangent;
-    // Bitangent
-    glm::vec3 Bitangent;
-};
 
 class Mesh {
 public:
-    std::vector<Vertex> vertices;
-    std::vector<GLuint> indices;
-
     glm::mat4 modelMatrix = glm::mat4(1.0f);
 
-    GLuint VAO = 0;
-
-    Mesh(int columns, int rows, int width, int depth) noexcept;
-    ~Mesh() noexcept;
+    Mesh() = default;
+    virtual ~Mesh() noexcept;
 
     Mesh(const Mesh& copy) = delete;
     Mesh& operator=(const Mesh&) = delete;
+    Mesh(Mesh&& move) = delete;
+    Mesh& operator=(Mesh&& move) = delete;
 
-    Mesh(Mesh&& move) noexcept;
-    Mesh& operator=(Mesh&& move) noexcept;
+    virtual void Draw() = 0;
 
-    void Draw();
+protected:
+    GLuint VAO = 0, VBO = 0, EBO = 0;
 
-
-private:
-    GLuint VBO, EBO;
-
-    void generateGrid(int columns, int rows, int width, int depth);
-    void setupMesh();
-    void freeGPUresources();
+    void freeGPUresources() noexcept;
 };

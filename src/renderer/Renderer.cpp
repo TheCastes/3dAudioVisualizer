@@ -2,12 +2,14 @@
 
 #include "../../include/renderer/Renderer.h"
 #include "../../include/renderer/GridMesh.h"
+#include "../../include/renderer/SphereFieldMesh.h"
 
 Renderer::Renderer() = default;
 
 Renderer::~Renderer() {
     if (!isInitialized) return;
-    mesh.reset();
+    gridMesh.reset();
+    sphereMesh.reset();
     shaderLibrary.clear();
     spectrogramTexture.reset();
     glfwDestroyWindow(applicationWindow);
@@ -67,10 +69,12 @@ bool Renderer::init() {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    shaderLibrary.add("Displacement Heatmap", "../assets/shaders/displacement.vert", "../assets/shaders/heatmap.frag");
-    shaderLibrary.add("Displacement B&W", "../assets/shaders/displacement.vert", "../assets/shaders/greyscale.frag");
+    shaderLibrary.add("Displacement Heatmap", "../assets/shaders/displacement.vert", "../assets/shaders/heatmap.frag", RenderMode::Scientific);
+    shaderLibrary.add("Sphere Height", "../assets/shaders/sphere_height.vert", "../assets/shaders/sphere.frag", RenderMode::Spherical);
+    shaderLibrary.add("Sphere Radius", "../assets/shaders/sphere_radius.vert", "../assets/shaders/sphere.frag", RenderMode::Spherical);
 
-    mesh = std::make_unique<GridMesh>(512, 512, 10, 10);
+    gridMesh = std::make_unique<GridMesh>(512, 512, 10, 10);
+    sphereMesh = std::make_unique<SphereFieldMesh>(128, 10, 10);
 
     spectrogramTexture = std::make_unique<SpectrogramTexture>();
     spectrogramTexture->init();
@@ -96,7 +100,7 @@ void Renderer::render(const float currentAudioLevel, const SpectrogramBuffer& sp
     shader.set("spectrogram", 0);
     shader.set("level", currentAudioLevel);
 
-    if (shaderLibrary.activeIndex() == 0 && !colormapList.empty()) {
+    if (!colormapList.empty()) {
         const Colormap& cm = colormapList[activeColormapIndex];
         shader.set("colorStopPositions", cm.positions.data(), 5);
         shader.set("colorStopColors", cm.colors.data(), 5);
@@ -104,9 +108,17 @@ void Renderer::render(const float currentAudioLevel, const SpectrogramBuffer& sp
 
     shader.set("projectionMatrix", projectionMatrix);
     shader.set("viewMatrix", viewMatrix);
-    mesh->modelMatrix = trackball.rotationMatrix();
-    shader.set("modelMatrix", mesh->modelMatrix);
-    mesh->Draw();
+
+    if (renderMode == RenderMode::Spherical) {
+        shader.set("heightScale", 2.0f);
+        shader.set("baseRadius", 0.04f);
+        shader.set("radiusScale", 0.12f);
+    }
+
+    Mesh& activeMesh = (renderMode == RenderMode::Scientific) ? *gridMesh : *sphereMesh;
+    activeMesh.modelMatrix = trackball.rotationMatrix();
+    shader.set("modelMatrix", activeMesh.modelMatrix);
+    activeMesh.Draw();
 }
 
 void Renderer::swapBuffers() const {
@@ -156,6 +168,15 @@ void Renderer::glfwCursorPosCallback(GLFWwindow* window, const double x, const d
 void Renderer::glfwKeyCallback(GLFWwindow* window, const int key, int scancode, const int action, int mods) {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GLFW_TRUE);
+}
+
+void Renderer::setRenderMode(RenderMode mode) {
+    renderMode = mode;
+    shaderLibrary.setActive(shaderLibrary.firstIndexForMode(mode));
+}
+
+RenderMode Renderer::getRenderMode() const {
+    return renderMode;
 }
 
 // this might be useful to let users import their own colormaps but who cares 

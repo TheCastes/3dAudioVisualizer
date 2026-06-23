@@ -57,6 +57,10 @@ void Ui::setStopCallback(std::function<void()> callback) {
     stopCallback = std::move(callback);
 }
 
+void Ui::setRenderModeCallback(std::function<void(RenderMode)> callback) {
+    renderModeCallback = std::move(callback);
+}
+
 void Ui::setColormapCallback(std::function<void(int)> callback) {
     colormapCallback = std::move(callback);
 }
@@ -103,9 +107,11 @@ void Ui::beginFrame() {
     ImGui::NewFrame();
 }
 
-void Ui::draw(const PlaybackState& state, int shaderIndex, const std::vector<Colormap>& colormaps, int colormapIndex) {
+void Ui::draw(const PlaybackState& state, RenderMode renderMode,
+              const std::vector<std::string>& shaderNames, const std::vector<RenderMode>& shaderModes,
+              int shaderIndex, const std::vector<Colormap>& colormaps, int colormapIndex) {
     const float playerBottom = drawPlayerPanel(state);
-    drawShaderPanel(playerBottom + panel.gap, shaderIndex, colormaps, colormapIndex);
+    drawShaderPanel(playerBottom + panel.gap, renderMode, shaderNames, shaderModes, shaderIndex, colormaps, colormapIndex);
 }
 
 float Ui::drawPlayerPanel(const PlaybackState& state) {
@@ -124,25 +130,40 @@ float Ui::drawPlayerPanel(const PlaybackState& state) {
     return bottom;
 }
 
-void Ui::drawShaderPanel(float topY, int shaderIndex, const std::vector<Colormap>& colormaps, int colormapIndex) {
+void Ui::drawShaderPanel(float topY, RenderMode renderMode,
+                         const std::vector<std::string>& shaderNames, const std::vector<RenderMode>& shaderModes,
+                         int shaderIndex, const std::vector<Colormap>& colormaps, int colormapIndex) {
     ImGui::SetNextWindowPos(ImVec2(panel.x, topY), ImGuiCond_Always);
     ImGui::SetNextWindowSize(ImVec2(panel.width, 0.0f), ImGuiCond_Always);
 
     ImGui::Begin("Render modes", nullptr, panel.flags);
 
-    shaderSelector(shaderIndex);
-    if (shaderIndex == 0 && !colormaps.empty())
+    renderModeSelector(renderMode);
+    if (!colormaps.empty())
         colormapDropdown(colormaps, colormapIndex);
+    if (renderMode == RenderMode::Spherical)
+        shaderSelector(shaderNames, shaderModes, shaderIndex);
 
     ImGui::End();
 }
 
-void Ui::shaderSelector(int shaderIndex) {
-    if (ImGui::RadioButton("heatmap", shaderIndex == 0) && shaderCallback)
-        shaderCallback(0);
+void Ui::renderModeSelector(RenderMode renderMode) {
+    if (ImGui::RadioButton("Scientific", renderMode == RenderMode::Scientific) && renderModeCallback)
+        renderModeCallback(RenderMode::Scientific);
     ImGui::SameLine();
-    if (ImGui::RadioButton("greyscale", shaderIndex == 1) && shaderCallback)
-        shaderCallback(1);
+    if (ImGui::RadioButton("Spherical", renderMode == RenderMode::Spherical) && renderModeCallback)
+        renderModeCallback(RenderMode::Spherical);
+}
+
+void Ui::shaderSelector(const std::vector<std::string>& shaderNames, const std::vector<RenderMode>& shaderModes, int shaderIndex) {
+    bool first = true;
+    for (int i = 0; i < static_cast<int>(shaderNames.size()); ++i) {
+        if (shaderModes[i] != RenderMode::Spherical) continue;
+        if (!first) ImGui::SameLine();
+        first = false;
+        if (ImGui::RadioButton(shaderNames[i].c_str(), shaderIndex == i) && shaderCallback)
+            shaderCallback(i);
+    }
 }
 
 void Ui::colormapDropdown(const std::vector<Colormap>& colormaps, int colormapIndex) {

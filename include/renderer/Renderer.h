@@ -11,6 +11,7 @@
 
 #include "Colormap.h"
 #include "Mesh.h"
+#include "RenderMode.h"
 #include "ShaderLibrary.h"
 #include "SpectrogramTexture.h"
 #include "Trackball.h"
@@ -27,8 +28,12 @@ public:
 
     bool init();
     void render(float currentAudioLevel, const SpectrogramBuffer& spectrogramBuffer);
+
     void swapBuffers() const;
     bool shouldClose() const;
+
+    void setRenderMode(RenderMode mode);
+    RenderMode getRenderMode() const;
 
     static void glfwMouseButtonCallback(GLFWwindow *window, int button, int action, int mods);
 
@@ -41,6 +46,7 @@ public:
     void setActiveShader(int index) { shaderLibrary.setActive(index); }
     int activeShaderIndex() const { return shaderLibrary.activeIndex(); }
     const std::vector<std::string>& shaderNames() const { return shaderLibrary.names(); }
+    const std::vector<RenderMode>& shaderModes() const { return shaderLibrary.modes(); }
 
     void setActiveColormap(int index) { activeColormapIndex = index; }
     int getActiveColormapIndex() const { return activeColormapIndex; }
@@ -64,11 +70,13 @@ private:
 
     GLFWwindow* applicationWindow = nullptr;
     ShaderLibrary shaderLibrary;
-    std::unique_ptr<Mesh> mesh;
+    std::unique_ptr<Mesh> gridMesh;
+    std::unique_ptr<Mesh> sphereMesh;
     std::unique_ptr<SpectrogramTexture> spectrogramTexture;
     Trackball trackball;
     bool isInitialized = false;
 
     std::vector<Colormap> colormapList = defaultColormaps();
     int activeColormapIndex = 0;
+    RenderMode renderMode = RenderMode::Scientific;
 };

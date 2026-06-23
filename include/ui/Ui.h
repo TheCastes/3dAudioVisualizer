@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "../renderer/Colormap.h"
+#include "../renderer/RenderMode.h"
 
 struct GLFWwindow;
 
@@ -31,23 +32,28 @@ public:
     void setBrowseCallback(std::function<void()> callback);
     void setPlayPauseCallback(std::function<void()> callback);
     void setStopCallback(std::function<void()> callback);
+    void setRenderModeCallback(std::function<void(RenderMode)> callback);
     void setShaderCallback(std::function<void(int)> callback);
     void setColormapCallback(std::function<void(int)> callback);
 
     void beginFrame();
-    void draw(const PlaybackState& state, int shaderIndex,
-              const std::vector<Colormap>& colormaps, int colormapIndex);
+    void draw(const PlaybackState& state, RenderMode renderMode,
+              const std::vector<std::string>& shaderNames, const std::vector<RenderMode>& shaderModes,
+              int shaderIndex, const std::vector<Colormap>& colormaps, int colormapIndex);
     void render();
 
 private:
     float drawPlayerPanel(const PlaybackState& state);
-    void drawShaderPanel(float topY, int shaderIndex, const std::vector<Colormap>& colormaps, int colormapIndex);
+    void drawShaderPanel(float topY, RenderMode renderMode,
+                         const std::vector<std::string>& shaderNames, const std::vector<RenderMode>& shaderModes,
+                         int shaderIndex, const std::vector<Colormap>& colormaps, int colormapIndex);
 
     void fileButton(bool hasTrack);
     void trackInfo(const PlaybackState& state);
     void transportControls(bool hasTrack, bool isPlaying);
 
-    void shaderSelector(int shaderIndex);
+    void renderModeSelector(RenderMode renderMode);
+    void shaderSelector(const std::vector<std::string>& shaderNames, const std::vector<RenderMode>& shaderModes, int shaderIndex);
     void colormapDropdown(const std::vector<Colormap>& colormaps, int colormapIndex);
 
     bool initialized = false;
@@ -55,6 +61,7 @@ private:
     std::function<void()> browseCallback;
     std::function<void()> playPauseCallback;
     std::function<void()> stopCallback;
+    std::function<void(RenderMode)> renderModeCallback;
     std::function<void(int)> shaderCallback;
     std::function<void(int)> colormapCallback;
 };

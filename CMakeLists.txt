@@ -54,8 +54,10 @@ set(INCLUDE_FILES
     include/audio/STFTProcessor.h
     include/audio/SpectrogramExporter.h
     include/renderer/Renderer.h
+    include/renderer/RenderMode.h
     include/renderer/Mesh.h
     include/renderer/GridMesh.h
+    include/renderer/SphereFieldMesh.h
     include/renderer/Shader.h
     include/renderer/ShaderLibrary.h
     include/renderer/SpectrogramTexture.h
@@ -71,6 +73,7 @@ set(SOURCE_FILES
     src/renderer/Renderer.cpp
     src/renderer/Mesh.cpp
     src/renderer/GridMesh.cpp
+    src/renderer/SphereFieldMesh.cpp
     src/renderer/SpectrogramTexture.cpp
     src/renderer/Trackball.cpp
     src/ui/Ui.cpp

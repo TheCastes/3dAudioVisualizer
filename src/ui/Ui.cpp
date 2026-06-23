@@ -7,6 +7,14 @@
 #include <cstdio>
 
 namespace {
+    struct PanelLayout {
+        float x = 0.0f;
+        float width = 280.0f;
+        float gap = 8.0f;
+        ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
+    };
+    constexpr PanelLayout panel{};
+
     std::string formatTime(double seconds) {
         if (seconds < 0.0) seconds = 0.0;
         const int total = static_cast<int>(seconds);
@@ -57,28 +65,15 @@ void Ui::setShaderCallback(std::function<void(int)> callback) {
     shaderCallback = std::move(callback);
 }
 
-void Ui::beginFrame() {
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-}
-
-void Ui::draw(const PlaybackState& state, int shaderIndex,
-              const std::vector<Colormap>& colormaps, int colormapIndex) {
-    ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Always);
-    ImGui::SetNextWindowSize(ImVec2(280.0f, 0.0f), ImGuiCond_Always);
-    constexpr ImGuiWindowFlags flags =
-        ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
-
-    ImGui::Begin("3dAudioVisualizer", nullptr, flags);
-
-    const bool hasTrack = !state.trackName.empty();
-
+void Ui::fileButton(bool hasTrack) {
     if (hasTrack) ImGui::BeginDisabled();
     if (ImGui::Button("Apri file...") && browseCallback)
         browseCallback();
     if (hasTrack) ImGui::EndDisabled();
+}
 
+void Ui::trackInfo(const PlaybackState& state) {
+    const bool hasTrack = !state.trackName.empty();
     ImGui::TextUnformatted(hasTrack ? state.trackName.c_str() : "Nessuna traccia");
     ImGui::SameLine();
     const std::string timeText = formatTime(state.positionSeconds) + " / " + formatTime(state.lengthSeconds);
@@ -90,41 +85,81 @@ void Ui::draw(const PlaybackState& state, int shaderIndex,
     ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.45f, 0.70f, 0.50f, 1.0f));
     ImGui::ProgressBar(fraction, ImVec2(-1.0f, 0.0f), "");
     ImGui::PopStyleColor();
+}
 
+void Ui::transportControls(bool hasTrack, bool isPlaying) {
     if (!hasTrack) ImGui::BeginDisabled();
-    if (ImGui::Button(state.isPlaying ? "Pausa" : "Play") && playPauseCallback)
+    if (ImGui::Button(isPlaying ? "Pausa" : "Play") && playPauseCallback)
         playPauseCallback();
     ImGui::SameLine();
     if (ImGui::Button("Stop") && stopCallback)
         stopCallback();
     if (!hasTrack) ImGui::EndDisabled();
+}
 
-    ImGui::Separator();
-    ImGui::Text("Rendering");
+void Ui::beginFrame() {
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+}
+
+void Ui::draw(const PlaybackState& state, int shaderIndex, const std::vector<Colormap>& colormaps, int colormapIndex) {
+    const float playerBottom = drawPlayerPanel(state);
+    drawShaderPanel(playerBottom + panel.gap, shaderIndex, colormaps, colormapIndex);
+}
+
+float Ui::drawPlayerPanel(const PlaybackState& state) {
+    ImGui::SetNextWindowPos(ImVec2(panel.x, 0.0f), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(panel.width, 0.0f), ImGuiCond_Always);
+
+    ImGui::Begin("Player", nullptr, panel.flags);
+
+    const bool hasTrack = !state.trackName.empty();
+    fileButton(hasTrack);
+    trackInfo(state);
+    transportControls(hasTrack, state.isPlaying);
+
+    const float bottom = ImGui::GetWindowPos().y + ImGui::GetWindowSize().y;
+    ImGui::End();
+    return bottom;
+}
+
+void Ui::drawShaderPanel(float topY, int shaderIndex, const std::vector<Colormap>& colormaps, int colormapIndex) {
+    ImGui::SetNextWindowPos(ImVec2(panel.x, topY), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(panel.width, 0.0f), ImGuiCond_Always);
+
+    ImGui::Begin("Render modes", nullptr, panel.flags);
+
+    shaderSelector(shaderIndex);
+    if (shaderIndex == 0 && !colormaps.empty())
+        colormapDropdown(colormaps, colormapIndex);
+
+    ImGui::End();
+}
+
+void Ui::shaderSelector(int shaderIndex) {
     if (ImGui::RadioButton("heatmap", shaderIndex == 0) && shaderCallback)
         shaderCallback(0);
     ImGui::SameLine();
     if (ImGui::RadioButton("greyscale", shaderIndex == 1) && shaderCallback)
         shaderCallback(1);
+}
 
-    if (shaderIndex == 0 && !colormaps.empty()) {
-        ImGui::Text("Colormap");
-        const char* currentName = colormaps[colormapIndex].name.c_str();
-        if (ImGui::BeginCombo("##colormap", currentName)) {
-            for (int i = 0; i < static_cast<int>(colormaps.size()); ++i) {
-                bool isSelected = (colormapIndex == i);
-                if (ImGui::Selectable(colormaps[i].name.c_str(), isSelected)) {
-                    if (colormapCallback)
-                        colormapCallback(i);
-                }
-                if (isSelected)
-                    ImGui::SetItemDefaultFocus();
+void Ui::colormapDropdown(const std::vector<Colormap>& colormaps, int colormapIndex) {
+    ImGui::Text("Colormap");
+    const char* currentName = colormaps[colormapIndex].name.c_str();
+    if (ImGui::BeginCombo("##colormap", currentName)) {
+        for (int i = 0; i < static_cast<int>(colormaps.size()); ++i) {
+            bool isSelected = (colormapIndex == i);
+            if (ImGui::Selectable(colormaps[i].name.c_str(), isSelected)) {
+                if (colormapCallback)
+                    colormapCallback(i);
             }
-            ImGui::EndCombo();
+            if (isSelected)
+                ImGui::SetItemDefaultFocus();
         }
+        ImGui::EndCombo();
     }
-
-    ImGui::End();
 }
 
 void Ui::render() {

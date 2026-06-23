@@ -40,6 +40,16 @@ public:
     void render();
 
 private:
+    float drawPlayerPanel(const PlaybackState& state);
+    void drawShaderPanel(float topY, int shaderIndex, const std::vector<Colormap>& colormaps, int colormapIndex);
+
+    void fileButton(bool hasTrack);
+    void trackInfo(const PlaybackState& state);
+    void transportControls(bool hasTrack, bool isPlaying);
+
+    void shaderSelector(int shaderIndex);
+    void colormapDropdown(const std::vector<Colormap>& colormaps, int colormapIndex);
+
     bool initialized = false;
 
     std::function<void()> browseCallback;

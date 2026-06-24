@@ -1,4 +1,5 @@
 #include "../../include/ui/Ui.h"
+#include "../../include/ui/Theme.h"
 
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
@@ -36,7 +37,7 @@ Ui::~Ui() {
 bool Ui::init(GLFWwindow* window) {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGui::StyleColorsDark();
+    applyTheme();
     
     if (!ImGui_ImplGlfw_InitForOpenGL(window, true)) return false;
     if (!ImGui_ImplOpenGL3_Init("#version 460")) return false;

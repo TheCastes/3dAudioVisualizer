@@ -82,7 +82,7 @@ bool Renderer::init() {
     linearSpectrogramTexture = std::make_unique<SpectrogramTexture>();
     melSpectrogramTexture = std::make_unique<SpectrogramTexture>();
 
-    glClearColor(0.20f, 0.20f, 0.20f, 1.0f);
+    glClearColor(0.08f, 0.08f, 0.15f, 1.0f);
     std::cout << "Rendering loop avviato...\n";
     isInitialized = true;
     return true;
@@ -91,6 +91,20 @@ bool Renderer::init() {
 void Renderer::render(const float currentAudioLevel,
                       const SpectrogramBuffer& linearSpectrogram,
                       const SpectrogramBuffer& melSpectrogram) {
+    glViewport(0, 0, viewportWidth, viewportHeight);
+
+    glClearColor(0.08f, 0.08f, 0.15f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // sub-viewport
+    const int subW = static_cast<int>(viewportWidth  * renderFractionW);
+    const int subH = static_cast<int>(viewportHeight * renderFractionH);
+
+    glViewport(viewportWidth - subW, viewportHeight - subH, subW, subH);
+    glEnable(GL_SCISSOR_TEST);
+    glScissor(viewportWidth - subW, viewportHeight - subH, subW, subH);
+
+    glClearColor(0.04f, 0.04f, 0.05f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     SpectrogramTexture& activeTexture =
@@ -100,10 +114,6 @@ void Renderer::render(const float currentAudioLevel,
 
     activeTexture.update(activeSpectrogram);
     activeTexture.bind(0);
-
-    const int subW = static_cast<int>(viewportWidth  * renderFractionW);
-    const int subH = static_cast<int>(viewportHeight * renderFractionH);
-    glViewport(viewportWidth - subW, viewportHeight - subH, subW, subH);
 
     Shader& shader = shaderLibrary.active();
     shader.Use();
@@ -137,6 +147,8 @@ void Renderer::render(const float currentAudioLevel,
     activeMesh.modelMatrix = trackball.rotationMatrix();
     shader.set("modelMatrix", activeMesh.modelMatrix);
     activeMesh.Draw();
+
+    glDisable(GL_SCISSOR_TEST);
 }
 
 void Renderer::swapBuffers() const {

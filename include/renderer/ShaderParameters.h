@@ -1,11 +1,11 @@
 #pragma once
 
 struct ShaderParameters {
-    int   temporalWindow = 20;
-    float temporalSigma  = 50.0f;
+    int   sphereGridSize = 64;
     int   freqSampleSize = 4;
+    int   temporalWindow = 20;
+    float temporalSigma  = 30.0f;
     float heightScale    = 2.0f;
     float baseRadius     = 0.04f;
-    float radiusScale    = 0.12f;
-    int   sphereGridSize = 128;
+    float radiusScale    = 0.13f;
 };

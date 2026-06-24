@@ -49,6 +49,8 @@ public:
 
     static void glfwKeyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
 
+    static void glfwScrollCallback(GLFWwindow *window, double xoffset, double yoffset);
+
     GLFWwindow* getWindow() const { return applicationWindow; }
 
     void setActiveShader(int index) { shaderLibrary.setActive(index); }

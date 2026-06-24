@@ -54,3 +54,8 @@ void Trackball::applyRotation(const float angleDegrees, const glm::vec3& axis) {
     const glm::quat r = glm::angleAxis(glm::radians(angleDegrees), axis);
     currentRotation = glm::normalize(r * currentRotation);
 }
+
+void Trackball::scroll(const float delta) {
+    zoom *= std::pow(0.9f, delta);
+    zoom = std::clamp(zoom, 0.1f, 10.0f);
+}

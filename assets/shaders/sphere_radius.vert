@@ -44,7 +44,7 @@ void main() {
     mag = weightedSum / weightSum;
 
     vec3 worldCenter = center;
-    float r = mag * radiusScale;
+    float r = pow(mag, 1.2) * radiusScale;
 
     centerView = (viewMatrix * modelMatrix * vec4(worldCenter, 1.0)).xyz;
     radiusView = r;

@@ -56,6 +56,7 @@ bool Renderer::init() {
     glfwSetMouseButtonCallback(applicationWindow, glfwMouseButtonCallback);
     glfwSetCursorPosCallback(applicationWindow, glfwCursorPosCallback);
     glfwSetKeyCallback(applicationWindow, glfwKeyCallback);
+    glfwSetScrollCallback(applicationWindow, glfwScrollCallback);
 
     glfwSetFramebufferSizeCallback(applicationWindow, [](GLFWwindow* window, const int width, const int height){
             glViewport(0, 0, width, height);
@@ -74,9 +75,11 @@ bool Renderer::init() {
     shaderLibrary.add("Sphere Height", "../assets/shaders/sphere_height.vert", "../assets/shaders/sphere.frag", RenderMode::Spherical);
     shaderLibrary.add("Sphere Radius", "../assets/shaders/sphere_radius.vert", "../assets/shaders/sphere.frag", RenderMode::Spherical);
 
-    gridMesh = std::make_unique<GridMesh>(512, 512, 10, 10);
-    sphereMesh = std::make_unique<SphereFieldMesh>(shaderParameters.sphereGridSize, 10, 10);
+    gridMesh = std::make_unique<GridMesh>(512, 512, 7, 7);
+    sphereMesh = std::make_unique<SphereFieldMesh>(shaderParameters.sphereGridSize, 7, 7);
     previousSphereGridSize = shaderParameters.sphereGridSize;
+
+    trackball.applyRotation(-90.0f, glm::vec3(1.0f, 0.0f, 0.0f));
 
     linearSpectrogramTexture = std::make_unique<SpectrogramTexture>();
     melSpectrogramTexture = std::make_unique<SpectrogramTexture>();
@@ -120,7 +123,7 @@ void Renderer::render(const float currentAudioLevel,
     }
 
     shader.set("projectionMatrix", projectionMatrix);
-    shader.set("viewMatrix", viewMatrix);
+    shader.set("viewMatrix", viewMatrix * glm::scale(glm::mat4(1.0f), glm::vec3(trackball.getZoom())));
 
     if (renderMode == RenderMode::Spherical) {
         if (shaderParameters.sphereGridSize != previousSphereGridSize) {
@@ -185,6 +188,11 @@ void Renderer::glfwCursorPosCallback(GLFWwindow* window, const double x, const d
 void Renderer::glfwKeyCallback(GLFWwindow* window, const int key, int scancode, const int action, int mods) {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, GLFW_TRUE);
+}
+
+void Renderer::glfwScrollCallback(GLFWwindow* window, double /*xoffset*/, const double yoffset) {
+    Renderer* self = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
+    self->trackball.scroll(static_cast<float>(yoffset));
 }
 
 void Renderer::setRenderMode(RenderMode mode) {

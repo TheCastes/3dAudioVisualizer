@@ -17,7 +17,7 @@ public:
 
     float getZoom() const { return zoom; }
 private:
-    glm::quat currentRotation = glm::quat(glm::vec3(glm::radians(90.0f), 0.0f, 0.0f));
+    glm::quat currentRotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
 
     glm::vec3 lastPoint{};
     bool dragging = false;

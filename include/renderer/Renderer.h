@@ -67,6 +67,16 @@ public:
 
     void resetRotation() { trackball.reset(); }
     void resetParameters() { shaderParameters = ShaderParameters{}; }
+    void setPresetIsometric() {
+        trackball.reset();
+        trackball.applyRotation(-45.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+        trackball.applyRotation(-45.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+    }
+    void setPresetSpectrum() {
+        trackball.reset();
+        trackball.applyRotation(-90.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+        trackball.applyRotation(-90.0f, glm::vec3(0.0f, 0.0f, 1.0f));
+    }
 
     ShaderControls shaderControls() {
         return { shaderLibrary.names(), shaderLibrary.modes(), shaderLibrary.activeIndex(),

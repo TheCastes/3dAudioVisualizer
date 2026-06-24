@@ -85,6 +85,14 @@ void Ui::setResetParametersCallback(std::function<void()> callback) {
     resetParametersCallback = std::move(callback);
 }
 
+void Ui::setPresetIsometricCallback(std::function<void()> callback) {
+    presetIsometricCallback = std::move(callback);
+}
+
+void Ui::setPresetSpectrumCallback(std::function<void()> callback) {
+    presetSpectrumCallback = std::move(callback);
+}
+
 void Ui::fileButton(bool hasTrack) {
     if (hasTrack) ImGui::BeginDisabled();
     if (ImGui::Button("Open file...") && browseCallback)
@@ -223,6 +231,15 @@ void Ui::colormapDropdown(const std::vector<Colormap>& colormaps, int colormapIn
 
 void Ui::shaderParametersSection(RenderMode renderMode, const ShaderControls& shaderControls) {
     ShaderParameters& parameters = shaderControls.parameters;
+    ImGui::SeparatorText("View presets");
+    if (ImGui::Button("Top") && resetRotationCallback)
+        resetRotationCallback();
+    ImGui::SameLine();
+    if (ImGui::Button("Isometric") && presetIsometricCallback)
+        presetIsometricCallback();
+    ImGui::SameLine();
+    if (ImGui::Button("Spectrum") && presetSpectrumCallback)
+        presetSpectrumCallback();
     ImGui::SeparatorText("Shader settings");
     if (!shaderControls.colormaps.empty())
         colormapDropdown(shaderControls.colormaps, shaderControls.colormapIndex);
@@ -239,9 +256,6 @@ void Ui::shaderParametersSection(RenderMode renderMode, const ShaderControls& sh
         ImGui::SliderFloat("Radius scale", &parameters.radiusScale, 0.0f, 0.5f, "%.3f");
     }
     ImGui::Separator();
-    if (ImGui::Button("Reset rotation") && resetRotationCallback)
-        resetRotationCallback();
-    ImGui::SameLine();
     if (ImGui::Button("Reset parameters") && resetParametersCallback)
         resetParametersCallback();
 }

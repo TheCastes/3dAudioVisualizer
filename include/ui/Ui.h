@@ -42,6 +42,8 @@ public:
     void setSpectrogramGainCallback(std::function<void(float)> callback);
     void setResetRotationCallback(std::function<void()> callback);
     void setResetParametersCallback(std::function<void()> callback);
+    void setPresetIsometricCallback(std::function<void()> callback);
+    void setPresetSpectrumCallback(std::function<void()> callback);
 
     void beginFrame();
     void draw(const PlaybackState& state, RenderMode renderMode, SpectrogramScale spectrogramScale,
@@ -75,6 +77,8 @@ private:
     std::function<void(float)> spectrogramGainCallback;
     std::function<void()> resetRotationCallback;
     std::function<void()> resetParametersCallback;
+    std::function<void()> presetIsometricCallback;
+    std::function<void()> presetSpectrumCallback;
 
     float spectrogramGainDecibels = 0.0f;
 };

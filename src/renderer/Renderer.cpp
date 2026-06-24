@@ -79,8 +79,6 @@ bool Renderer::init() {
     sphereMesh = std::make_unique<SphereFieldMesh>(shaderParameters.sphereGridSize, 7, 7);
     previousSphereGridSize = shaderParameters.sphereGridSize;
 
-    trackball.applyRotation(-90.0f, glm::vec3(1.0f, 0.0f, 0.0f));
-
     linearSpectrogramTexture = std::make_unique<SpectrogramTexture>();
     melSpectrogramTexture = std::make_unique<SpectrogramTexture>();
 

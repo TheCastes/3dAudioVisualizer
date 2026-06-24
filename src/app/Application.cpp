@@ -41,6 +41,8 @@ int Application::run() {
     ui.setSpectrogramGainCallback([this](float gain) { audioEngine.setSpectrogramGainDecibels(gain); });
     ui.setResetRotationCallback([this]() { renderer.resetRotation(); });
     ui.setResetParametersCallback([this]() { renderer.resetParameters(); });
+    ui.setPresetIsometricCallback([this]() { renderer.setPresetIsometric(); });
+    ui.setPresetSpectrumCallback([this]() { renderer.setPresetSpectrum(); });
 
     runRenderLoop();
     return 0;

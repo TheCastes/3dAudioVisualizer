@@ -218,13 +218,15 @@ void Ui::shaderParametersSection(RenderMode renderMode, const ShaderControls& sh
     ImGui::SeparatorText("Shader settings");
     if (!shaderControls.colormaps.empty())
         colormapDropdown(shaderControls.colormaps, shaderControls.colormapIndex);
-    if (renderMode == RenderMode::Spherical)
+    if (renderMode == RenderMode::Spherical) {
         shaderSelector(shaderControls.shaderNames, shaderControls.shaderModes, shaderControls.shaderIndex);
+        ImGui::SliderInt("Sphere grid size", &parameters.sphereGridSize, 10, 200);
+        ImGui::SliderFloat("Height scale", &parameters.heightScale, 0.0f, 5.0f, "%.2f");
+    }
     ImGui::SliderInt("Temporal window", &parameters.temporalWindow, 1, 32);
     ImGui::SliderFloat("Temporal sigma", &parameters.temporalSigma, 1.0f, 60.0f, "%.1f");
     ImGui::SliderInt("Freq smoothing", &parameters.freqSampleSize, 1, 8);
     if (renderMode == RenderMode::Spherical) {
-        ImGui::SliderFloat("Height scale", &parameters.heightScale, 0.0f, 5.0f, "%.2f");
         ImGui::SliderFloat("Base radius", &parameters.baseRadius, 0.0f, 0.2f, "%.3f");
         ImGui::SliderFloat("Radius scale", &parameters.radiusScale, 0.0f, 0.5f, "%.3f");
     }

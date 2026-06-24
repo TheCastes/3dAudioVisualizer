@@ -75,7 +75,8 @@ bool Renderer::init() {
     shaderLibrary.add("Sphere Radius", "../assets/shaders/sphere_radius.vert", "../assets/shaders/sphere.frag", RenderMode::Spherical);
 
     gridMesh = std::make_unique<GridMesh>(512, 512, 10, 10);
-    sphereMesh = std::make_unique<SphereFieldMesh>(128, 10, 10);
+    sphereMesh = std::make_unique<SphereFieldMesh>(shaderParameters.sphereGridSize, 10, 10);
+    previousSphereGridSize = shaderParameters.sphereGridSize;
 
     linearSpectrogramTexture = std::make_unique<SpectrogramTexture>();
     melSpectrogramTexture = std::make_unique<SpectrogramTexture>();
@@ -122,6 +123,10 @@ void Renderer::render(const float currentAudioLevel,
     shader.set("viewMatrix", viewMatrix);
 
     if (renderMode == RenderMode::Spherical) {
+        if (shaderParameters.sphereGridSize != previousSphereGridSize) {
+            sphereMesh = std::make_unique<SphereFieldMesh>(shaderParameters.sphereGridSize, 10, 10);
+            previousSphereGridSize = shaderParameters.sphereGridSize;
+        }
         shader.set("heightScale", shaderParameters.heightScale);
         shader.set("baseRadius", shaderParameters.baseRadius);
         shader.set("radiusScale", shaderParameters.radiusScale);

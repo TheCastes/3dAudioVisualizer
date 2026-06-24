@@ -97,4 +97,5 @@ private:
     int activeColormapIndex = 0;
     RenderMode renderMode = RenderMode::Scientific;
     ShaderParameters shaderParameters;
+    int previousSphereGridSize = 70;
 };

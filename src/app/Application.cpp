@@ -115,8 +115,7 @@ void Application::runRenderLoop() {
             audioEngine.isPlaying(),
             audioEngine.getPositionSeconds(),
             audioEngine.getLengthSeconds()
-        }, renderer.getRenderMode(), renderer.getSpectrogramScale(), renderer.shaderNames(), renderer.shaderModes(),
-           renderer.activeShaderIndex(), renderer.colormaps(), renderer.getActiveColormapIndex());
+        }, renderer.getRenderMode(), renderer.getSpectrogramScale(), renderer.shaderControls());
         renderer.render(currentAudioLevel, audioEngine.getLinearSpectrogram(), audioEngine.getMelSpectrogram());
         ui.render();
 

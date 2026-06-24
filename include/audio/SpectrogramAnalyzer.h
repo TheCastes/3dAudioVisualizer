@@ -38,6 +38,11 @@ public:
         melSpectrogram.clear();
     }
 
+    void preFill() {
+        linearSpectrogram.preFill();
+        melSpectrogram.preFill();
+    }
+
     void setGainDecibels(float gain) {
         gainDecibels.store(gain, std::memory_order_relaxed);
     }

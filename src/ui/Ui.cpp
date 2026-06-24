@@ -9,7 +9,7 @@
 namespace {
     struct PanelLayout {
         float x = 0.0f;
-        float width = 280.0f;
+        float width = 450.0f;
         float gap = 8.0f;
         ImGuiWindowFlags flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
     };
@@ -79,14 +79,14 @@ void Ui::setSpectrogramGainCallback(std::function<void(float)> callback) {
 
 void Ui::fileButton(bool hasTrack) {
     if (hasTrack) ImGui::BeginDisabled();
-    if (ImGui::Button("Apri file...") && browseCallback)
+    if (ImGui::Button("Open file...") && browseCallback)
         browseCallback();
     if (hasTrack) ImGui::EndDisabled();
 }
 
 void Ui::trackInfo(const PlaybackState& state) {
     const bool hasTrack = !state.trackName.empty();
-    ImGui::TextUnformatted(hasTrack ? state.trackName.c_str() : "Nessuna traccia");
+    ImGui::TextUnformatted(hasTrack ? state.trackName.c_str() : "No track");
     ImGui::SameLine();
     const std::string timeText = formatTime(state.positionSeconds) + " / " + formatTime(state.lengthSeconds);
     ImGui::TextUnformatted(timeText.c_str());
@@ -101,7 +101,7 @@ void Ui::trackInfo(const PlaybackState& state) {
 
 void Ui::transportControls(bool hasTrack, bool isPlaying) {
     if (!hasTrack) ImGui::BeginDisabled();
-    if (ImGui::Button(isPlaying ? "Pausa" : "Play") && playPauseCallback)
+    if (ImGui::Button(isPlaying ? "Pause" : "Play") && playPauseCallback)
         playPauseCallback();
     ImGui::SameLine();
     if (ImGui::Button("Stop") && stopCallback)
@@ -116,10 +116,9 @@ void Ui::beginFrame() {
 }
 
 void Ui::draw(const PlaybackState& state, RenderMode renderMode, SpectrogramScale spectrogramScale,
-              const std::vector<std::string>& shaderNames, const std::vector<RenderMode>& shaderModes,
-              int shaderIndex, const std::vector<Colormap>& colormaps, int colormapIndex) {
+              const ShaderControls& shaderControls) {
     const float playerBottom = drawPlayerPanel(state);
-    const float shaderBottom = drawShaderPanel(playerBottom + panel.gap, renderMode, shaderNames, shaderModes, shaderIndex, colormaps, colormapIndex);
+    const float shaderBottom = drawShaderPanel(playerBottom + panel.gap, renderMode, shaderControls);
     drawSpectrogramPanel(shaderBottom + panel.gap, spectrogramScale);
 }
 
@@ -139,19 +138,14 @@ float Ui::drawPlayerPanel(const PlaybackState& state) {
     return bottom;
 }
 
-float Ui::drawShaderPanel(float topY, RenderMode renderMode,
-                          const std::vector<std::string>& shaderNames, const std::vector<RenderMode>& shaderModes,
-                          int shaderIndex, const std::vector<Colormap>& colormaps, int colormapIndex) {
+float Ui::drawShaderPanel(float topY, RenderMode renderMode, const ShaderControls& shaderControls) {
     ImGui::SetNextWindowPos(ImVec2(panel.x, topY), ImGuiCond_Always);
     ImGui::SetNextWindowSize(ImVec2(panel.width, 0.0f), ImGuiCond_Always);
 
     ImGui::Begin("Render modes", nullptr, panel.flags);
 
     renderModeSelector(renderMode);
-    if (!colormaps.empty())
-        colormapDropdown(colormaps, colormapIndex);
-    if (renderMode == RenderMode::Spherical)
-        shaderSelector(shaderNames, shaderModes, shaderIndex);
+    shaderParametersSection(renderMode, shaderControls);
 
     const float bottom = ImGui::GetWindowPos().y + ImGui::GetWindowSize().y;
     ImGui::End();
@@ -216,6 +210,23 @@ void Ui::colormapDropdown(const std::vector<Colormap>& colormaps, int colormapIn
                 ImGui::SetItemDefaultFocus();
         }
         ImGui::EndCombo();
+    }
+}
+
+void Ui::shaderParametersSection(RenderMode renderMode, const ShaderControls& shaderControls) {
+    ShaderParameters& parameters = shaderControls.parameters;
+    ImGui::SeparatorText("Shader settings");
+    if (!shaderControls.colormaps.empty())
+        colormapDropdown(shaderControls.colormaps, shaderControls.colormapIndex);
+    if (renderMode == RenderMode::Spherical)
+        shaderSelector(shaderControls.shaderNames, shaderControls.shaderModes, shaderControls.shaderIndex);
+    ImGui::SliderInt("Temporal window", &parameters.temporalWindow, 1, 32);
+    ImGui::SliderFloat("Temporal sigma", &parameters.temporalSigma, 1.0f, 60.0f, "%.1f");
+    ImGui::SliderInt("Freq smoothing", &parameters.freqSampleSize, 1, 8);
+    if (renderMode == RenderMode::Spherical) {
+        ImGui::SliderFloat("Height scale", &parameters.heightScale, 0.0f, 5.0f, "%.2f");
+        ImGui::SliderFloat("Base radius", &parameters.baseRadius, 0.0f, 0.2f, "%.3f");
+        ImGui::SliderFloat("Radius scale", &parameters.radiusScale, 0.0f, 0.5f, "%.3f");
     }
 }
 

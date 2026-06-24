@@ -23,6 +23,8 @@ bool AudioEngine::loadFile(const std::string& path) {
         std::lock_guard<std::mutex> lock(trackNameMutex);
         currentTrackName = file.getFileName().toStdString();
     }
+
+    spectrogramAnalyzer.preFill();
     return true;
 }
 

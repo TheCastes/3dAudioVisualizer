@@ -48,9 +48,23 @@ public:
         totalFramesWritten.store(0, std::memory_order_release);
     }
 
+    void preFill() {
+        std::vector<float> zeros(numBins, 0.0f);
+        for (int i = 0; i < maxFrames; ++i)
+            pushFrame(zeros.data());
+    }
+
     int totalFrames() const {
         const uint64_t writeIndexSnapshot = totalFramesWritten.load(std::memory_order_acquire);
         return static_cast<int>(std::min<uint64_t>(writeIndexSnapshot, maxFrames));
+    }
+
+    const float* getSlotData(int slot) const {
+        return &frameStorage[static_cast<std::size_t>(slot) * numBins];
+    }
+
+    uint64_t getWriteIndex() const {
+        return totalFramesWritten.load(std::memory_order_acquire);
     }
 
     int numFrequencyBins() const { return numBins; }

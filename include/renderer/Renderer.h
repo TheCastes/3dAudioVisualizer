@@ -12,7 +12,9 @@
 #include "Colormap.h"
 #include "Mesh.h"
 #include "RenderMode.h"
+#include "ShaderControls.h"
 #include "ShaderLibrary.h"
+#include "ShaderParameters.h"
 #include "SpectrogramScale.h"
 #include "SpectrogramTexture.h"
 #include "Trackball.h"
@@ -59,6 +61,13 @@ public:
     const std::vector<Colormap>& colormaps() const { return colormapList; }
     void addColormap(Colormap cm);
 
+    ShaderParameters& parameters() { return shaderParameters; }
+
+    ShaderControls shaderControls() {
+        return { shaderLibrary.names(), shaderLibrary.modes(), shaderLibrary.activeIndex(),
+                 colormapList, activeColormapIndex, shaderParameters };
+    }
+
     glm::mat4 projectionMatrix = glm::mat4(1.0f);
 private:
     const int screenWidth = 1280;
@@ -87,4 +96,5 @@ private:
     std::vector<Colormap> colormapList = defaultColormaps();
     int activeColormapIndex = 0;
     RenderMode renderMode = RenderMode::Scientific;
+    ShaderParameters shaderParameters;
 };

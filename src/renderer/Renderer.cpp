@@ -106,7 +106,11 @@ void Renderer::render(const float currentAudioLevel,
     Shader& shader = shaderLibrary.active();
     shader.Use();
     shader.set("spectrogram", 0);
-    shader.set("level", currentAudioLevel);
+    shader.set("writeCursor", activeTexture.getWriteCursor());
+    shader.set("validFrames", activeTexture.getValidFrameCount());
+    shader.set("temporalWindow", shaderParameters.temporalWindow);
+    shader.set("temporalSigma", shaderParameters.temporalSigma);
+    shader.set("freqSampleSize", shaderParameters.freqSampleSize);
 
     if (!colormapList.empty()) {
         const Colormap& cm = colormapList[activeColormapIndex];
@@ -118,9 +122,9 @@ void Renderer::render(const float currentAudioLevel,
     shader.set("viewMatrix", viewMatrix);
 
     if (renderMode == RenderMode::Spherical) {
-        shader.set("heightScale", 2.0f);
-        shader.set("baseRadius", 0.04f);
-        shader.set("radiusScale", 0.12f);
+        shader.set("heightScale", shaderParameters.heightScale);
+        shader.set("baseRadius", shaderParameters.baseRadius);
+        shader.set("radiusScale", shaderParameters.radiusScale);
     }
 
     Mesh& activeMesh = (renderMode == RenderMode::Scientific) ? *gridMesh : *sphereMesh;

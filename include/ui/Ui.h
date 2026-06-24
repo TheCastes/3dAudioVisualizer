@@ -6,6 +6,8 @@
 
 #include "../renderer/Colormap.h"
 #include "../renderer/RenderMode.h"
+#include "../renderer/ShaderControls.h"
+#include "../renderer/ShaderParameters.h"
 #include "../renderer/SpectrogramScale.h"
 
 struct GLFWwindow;
@@ -41,15 +43,12 @@ public:
 
     void beginFrame();
     void draw(const PlaybackState& state, RenderMode renderMode, SpectrogramScale spectrogramScale,
-              const std::vector<std::string>& shaderNames, const std::vector<RenderMode>& shaderModes,
-              int shaderIndex, const std::vector<Colormap>& colormaps, int colormapIndex);
+              const ShaderControls& shaderControls);
     void render();
 
 private:
     float drawPlayerPanel(const PlaybackState& state);
-    float drawShaderPanel(float topY, RenderMode renderMode,
-                          const std::vector<std::string>& shaderNames, const std::vector<RenderMode>& shaderModes,
-                          int shaderIndex, const std::vector<Colormap>& colormaps, int colormapIndex);
+    float drawShaderPanel(float topY, RenderMode renderMode, const ShaderControls& shaderControls);
     void drawSpectrogramPanel(float topY, SpectrogramScale spectrogramScale);
 
     void fileButton(bool hasTrack);
@@ -61,7 +60,7 @@ private:
     void spectrogramGainSlider();
     void shaderSelector(const std::vector<std::string>& shaderNames, const std::vector<RenderMode>& shaderModes, int shaderIndex);
     void colormapDropdown(const std::vector<Colormap>& colormaps, int colormapIndex);
-
+    void shaderParametersSection(RenderMode renderMode, const ShaderControls& shaderControls);
     bool initialized = false;
 
     std::function<void()> browseCallback;

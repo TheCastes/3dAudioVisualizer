@@ -51,7 +51,7 @@ public:
     void setActiveColormap(int index) { activeColormapIndex = index; }
     int getActiveColormapIndex() const { return activeColormapIndex; }
     const std::vector<Colormap>& colormaps() const { return colormapList; }
-    void addColormap(Colormap cm);
+    // void addColormap(Colormap cm);
 
     glm::mat4 projectionMatrix = glm::mat4(1.0f);
 private:

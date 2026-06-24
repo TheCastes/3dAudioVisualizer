@@ -4,6 +4,7 @@
 AudioEngine::AudioEngine() {
     formatManager.registerBasicFormats();
     formatManager.registerFormat(new juce::MP3AudioFormat(), true);
+    spectrogramFrameBuffer.preFill();
 }
 
 AudioEngine::~AudioEngine() {
@@ -38,9 +39,9 @@ void AudioEngine::requestLoad(const std::string& path) {
 void AudioEngine::play() {
     transportSource.start();
 }
-void AudioEngine::stop() {
-    transportSource.stop();
-}
+// void AudioEngine::stop() {
+//     transportSource.stop();
+// }
 void AudioEngine::togglePlayback() {
     juce::MessageManager::callAsync([this]() {
         if (readerSource == nullptr) return;
@@ -56,6 +57,7 @@ void AudioEngine::eject() {
         transportSource.setSource(nullptr);
         readerSource.reset();
         spectrogramFrameBuffer.clear();
+        spectrogramFrameBuffer.preFill();
         stftProcessor.reset();
         {
             std::lock_guard<std::mutex> lock(trackNameMutex);
@@ -84,9 +86,9 @@ float AudioEngine::getCurrentAudioLevel() const {
     return currentAudioLevel.load(std::memory_order_relaxed);
 }
 
-bool AudioEngine::isAudioReady() const {
-    return audioReadyFlag.load(std::memory_order_acquire);
-}
+// bool AudioEngine::isAudioReady() const {
+//     return audioReadyFlag.load(std::memory_order_acquire);
+// }
 
 void AudioEngine::setAudioReady() {
     {

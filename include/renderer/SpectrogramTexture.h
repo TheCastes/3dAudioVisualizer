@@ -2,9 +2,6 @@
 
 #include <glad/glad.h>
 
-#include <array>
-#include <vector>
-
 #include "../audio/SpectrogramBuffer.h"
 
 class SpectrogramTexture {
@@ -25,14 +22,16 @@ public:
 
     GLuint id() const { return textureId; }
 
-    int validFrames() const { return uploadedFrameCount; }
+    int getWriteCursor() const { return writeCursor; }
+    int getValidFrameCount() const { return validFrameCount; }
 
 private:
-    static constexpr int textureWidth  = SpectrogramBuffer::numFrequencyBins;
-    static constexpr int textureHeight = SpectrogramBuffer::maxFrames;
+    static constexpr int textureWidth  = SpectrogramBuffer::maxFrames;
+    static constexpr int textureHeight = SpectrogramBuffer::numFrequencyBins;
 
     GLuint textureId = 0;
-    int uploadedFrameCount = 0;
 
-    std::vector<std::array<float, SpectrogramBuffer::numFrequencyBins>> stagingFrames;
+    int writeCursor = 0;
+    int validFrameCount = 0;
+    int lastUploadCursor = 0;
 };

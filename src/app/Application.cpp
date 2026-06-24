@@ -102,9 +102,9 @@ void Application::waitUntilAudioIsReady() {
 void Application::runRenderLoop() {
     while (!renderer.shouldClose()) {
         glfwPollEvents();
-        currentFrame = glfwGetTime();
-        deltaTime = currentFrame - lastFrame;
-        lastFrame = currentFrame;
+        // currentFrame = glfwGetTime();
+        // deltaTime = currentFrame - lastFrame;
+        // lastFrame = currentFrame;
         const float currentAudioLevel = audioEngine.getCurrentAudioLevel();
 
         ui.beginFrame();

@@ -3,7 +3,6 @@
 #include <array>
 #include <atomic>
 #include <algorithm>
-#include <cstdint>
 
 class SpectrogramBuffer {
 public:
@@ -19,6 +18,7 @@ public:
         totalFramesWritten.store(writeIndex + 1, std::memory_order_release);
     }
 
+    // Used by SpectrogramExporter (debug / future use)
     int getSnapshot(std::array<float, numFrequencyBins>* destinationFrames, int requestedFrameCount) const {
         const uint64_t writeIndexSnapshot = totalFramesWritten.load(std::memory_order_acquire);
         const int framesAvailable = static_cast<int>(std::min<uint64_t>(writeIndexSnapshot, maxFrames));
@@ -41,9 +41,19 @@ public:
         totalFramesWritten.store(0, std::memory_order_release);
     }
 
-    int totalFrames() const {
-        const uint64_t writeIndexSnapshot = totalFramesWritten.load(std::memory_order_acquire);
-        return static_cast<int>(std::min<uint64_t>(writeIndexSnapshot, maxFrames));
+    void preFill() {
+        float zeros[numFrequencyBins] = {};
+        for (int i = 0; i < maxFrames; ++i) {
+            pushFrame(zeros);
+        }
+    }
+
+    const float* getSlotData(int slot) const {
+        return frameStorage[slot].data();
+    }
+
+    uint64_t getWriteIndex() const {
+        return totalFramesWritten.load(std::memory_order_acquire);
     }
 
 private:

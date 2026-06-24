@@ -4,6 +4,13 @@
 #include "../../include/renderer/GridMesh.h"
 #include "../../include/renderer/SphereFieldMesh.h"
 
+// Tweak these to experiment with sphere density and size:
+//   sphereGridSize: spheres per axis (64 = 64x64 grid)
+//   worldSize: total width/depth in world units
+//   binWidth: frequency bins per sphere = 512 / sphereGridSize
+constexpr int sphereGridSize = 32;
+constexpr float worldSize = 10;
+
 Renderer::Renderer() = default;
 
 Renderer::~Renderer() {
@@ -72,9 +79,10 @@ bool Renderer::init() {
     shaderLibrary.add("Displacement Heatmap", "../assets/shaders/displacement.vert", "../assets/shaders/heatmap.frag", RenderMode::Scientific);
     shaderLibrary.add("Sphere Height", "../assets/shaders/sphere_height.vert", "../assets/shaders/sphere.frag", RenderMode::Spherical);
     shaderLibrary.add("Sphere Radius", "../assets/shaders/sphere_radius.vert", "../assets/shaders/sphere.frag", RenderMode::Spherical);
+    shaderLibrary.add("Sphere Wave", "../assets/shaders/sphere_wave.vert", "../assets/shaders/sphere.frag", RenderMode::Spherical);
 
-    gridMesh = std::make_unique<GridMesh>(512, 512, 10, 10);
-    sphereMesh = std::make_unique<SphereFieldMesh>(128, 10, 10);
+    gridMesh = std::make_unique<GridMesh>(512, 512, worldSize, worldSize);
+    sphereMesh = std::make_unique<SphereFieldMesh>(sphereGridSize, worldSize, worldSize);
 
     spectrogramTexture = std::make_unique<SpectrogramTexture>();
     spectrogramTexture->init();
@@ -98,7 +106,10 @@ void Renderer::render(const float currentAudioLevel, const SpectrogramBuffer& sp
     Shader& shader = shaderLibrary.active();
     shader.Use();
     shader.set("spectrogram", 0);
-    shader.set("level", currentAudioLevel);
+    shader.set("writeCursor", spectrogramTexture->getWriteCursor());
+    shader.set("validFrames", spectrogramTexture->getValidFrameCount());
+    shader.set("temporalWindow", 10);
+    shader.set("temporalSigma", 40.0f);
 
     if (!colormapList.empty()) {
         const Colormap& cm = colormapList[activeColormapIndex];
@@ -110,9 +121,12 @@ void Renderer::render(const float currentAudioLevel, const SpectrogramBuffer& sp
     shader.set("viewMatrix", viewMatrix);
 
     if (renderMode == RenderMode::Spherical) {
-        shader.set("heightScale", 2.0f);
+        shader.set("heightScale", 1.8f);
         shader.set("baseRadius", 0.04f);
-        shader.set("radiusScale", 0.12f);
+        shader.set("radiusScale", 0.15f);
+        shader.set("sampleSize", 4);
+        shader.set("temporalWindow", 20);
+        shader.set("temporalSigma", 50.0f);
     }
 
     Mesh& activeMesh = (renderMode == RenderMode::Scientific) ? *gridMesh : *sphereMesh;

@@ -27,7 +27,8 @@ public:
     const std::vector<std::string>& names() const { return shaderNames; }
     const std::vector<RenderMode>& modes() const { return shaderModes; }
 
-    RenderMode modeOf(int index) const { return shaderModes[index]; }
+    // Unused for now
+    // RenderMode modeOf(int index) const { return shaderModes[index]; }
 
     int firstIndexForMode(RenderMode mode) const {
         for (int i = 0; i < count(); ++i)

@@ -2,8 +2,8 @@
 
 out vec4 color;
 
-in vec2 interp_uv;
 in vec4 texel;
+// in vec2 interp_uv;
 
 
 const int MAX_STOPS = 5;

@@ -9,6 +9,9 @@ uniform mat4 viewMatrix;
 uniform mat4 projectionMatrix;
 uniform sampler2D spectrogram;
 uniform float radiusScale;
+uniform int writeCursor;
+uniform int validFrames;
+uniform int sampleSize;
 
 out vec2 localPos;
 flat out vec3 centerView;
@@ -16,7 +19,23 @@ flat out float radiusView;
 flat out float mag;
 
 void main() {
-    mag = texture(spectrogram, vec2(uv.y, uv.x)).r;
+    float baseFreq = uv.y * 512.0;
+    float baseAge = (1.0 - uv.x) * float(validFrames - 1);
+
+    int halfSize = sampleSize / 2;
+    float sum = 0.0;
+    int total = 0;
+    for (int fi = -halfSize; fi < sampleSize - halfSize; ++fi) {
+        for (int ti = -halfSize; ti < sampleSize - halfSize; ++ti) {
+            float freq = (baseFreq + float(fi)) / 512.0;
+            float age = baseAge + float(ti);
+            float row_f = mod(float(writeCursor) - 1.0 - age + 512.0, 512.0);
+            float t_coord = (row_f + 0.5) / 512.0;
+            sum += texture(spectrogram, vec2(freq, t_coord)).r;
+            total++;
+        }
+    }
+    mag = sum / float(total);
 
     vec3 worldCenter = center;
     float r = mag * radiusScale;

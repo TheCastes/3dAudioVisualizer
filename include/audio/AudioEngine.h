@@ -28,7 +28,7 @@ public:
     void requestLoad(const std::string& path);
 
     void play();
-    void stop();
+    // void stop();
     void togglePlayback();
     void eject();
     bool isPlaying() const;
@@ -40,7 +40,7 @@ public:
 
     float getCurrentAudioLevel() const;
 
-    bool isAudioReady() const;
+    // bool isAudioReady() const;
     void setAudioReady();
     bool waitUntilReady(std::chrono::milliseconds timeout);
 

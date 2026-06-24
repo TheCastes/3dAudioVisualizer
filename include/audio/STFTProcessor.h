@@ -35,9 +35,6 @@ public:
     }
 
 private:
-    static constexpr float minDecibels = -80.0f;
-    static constexpr float maxDecibels =   0.0f;
-
     juce::dsp::FFT fft;
     Sink& spectrogramSink;
     float inputRingBuffer[fftSize]{};
@@ -58,9 +55,7 @@ private:
         for (int k = 0; k < numFrequencyBins; ++k) {
             float realPart  = fftWorkBuffer[2 * k];
             float imaginaryPart  = fftWorkBuffer[2 * k + 1];
-            float magnitude = std::sqrt(realPart * realPart + imaginaryPart * imaginaryPart);
-            float decibels  = 20.0f * std::log10(std::max(magnitude, 1e-6f));
-            magnitudeBins[k] = std::clamp((decibels - minDecibels) / (maxDecibels - minDecibels), 0.0f, 1.0f);
+            magnitudeBins[k] = std::sqrt(realPart * realPart + imaginaryPart * imaginaryPart);
         }
         spectrogramSink.pushFrame(magnitudeBins);
     }

@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-#include "SpectrogramBuffer.h"
+#include "SpectrogramAnalyzer.h"
 #include "STFTProcessor.h"
 
 class AudioEngine : public juce::AudioIODeviceCallback {
@@ -44,8 +44,10 @@ public:
     void setAudioReady();
     bool waitUntilReady(std::chrono::milliseconds timeout);
 
-    SpectrogramBuffer& getSpectrogramBuffer();
-    const SpectrogramBuffer& getSpectrogramBuffer() const;
+    const SpectrogramBuffer& getLinearSpectrogram() const;
+    const SpectrogramBuffer& getMelSpectrogram() const;
+
+    void setSpectrogramGainDecibels(float gain);
 
     void audioDeviceAboutToStart(juce::AudioIODevice* device) override;
     void audioDeviceStopped() override;
@@ -69,8 +71,10 @@ private:
     std::mutex audioReadyMutex;
     std::condition_variable audioReadyCondition;
 
-    SpectrogramBuffer spectrogramFrameBuffer;
+    static constexpr int melBandCount = 128;
 
-    STFTProcessor<SpectrogramBuffer> stftProcessor{ spectrogramFrameBuffer };
+    SpectrogramAnalyzer spectrogramAnalyzer{ STFTProcessor<SpectrogramAnalyzer>::numFrequencyBins, melBandCount };
+
+    STFTProcessor<SpectrogramAnalyzer> stftProcessor{ spectrogramAnalyzer };
     std::vector<float> monoMixBuffer;
 };

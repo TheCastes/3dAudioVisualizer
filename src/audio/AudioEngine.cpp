@@ -55,7 +55,7 @@ void AudioEngine::eject() {
         transportSource.stop();
         transportSource.setSource(nullptr);
         readerSource.reset();
-        spectrogramFrameBuffer.clear();
+        spectrogramAnalyzer.clear();
         stftProcessor.reset();
         {
             std::lock_guard<std::mutex> lock(trackNameMutex);
@@ -106,18 +106,23 @@ bool AudioEngine::waitUntilReady(std::chrono::milliseconds timeout) {
     );
 }
 
-SpectrogramBuffer& AudioEngine::getSpectrogramBuffer() {
-    return spectrogramFrameBuffer;
+const SpectrogramBuffer& AudioEngine::getLinearSpectrogram() const {
+    return spectrogramAnalyzer.getLinearSpectrogram();
 }
 
-const SpectrogramBuffer& AudioEngine::getSpectrogramBuffer() const {
-    return spectrogramFrameBuffer;
+const SpectrogramBuffer& AudioEngine::getMelSpectrogram() const {
+    return spectrogramAnalyzer.getMelSpectrogram();
+}
+
+void AudioEngine::setSpectrogramGainDecibels(float gain) {
+    spectrogramAnalyzer.setGainDecibels(gain);
 }
 
 void AudioEngine::audioDeviceAboutToStart(juce::AudioIODevice* device) {
     currentSampleRate = device->getCurrentSampleRate();
     const int blockSize = device->getCurrentBufferSizeSamples();
     transportSource.prepareToPlay(blockSize, currentSampleRate);
+    spectrogramAnalyzer.prepare(currentSampleRate, STFTProcessor<SpectrogramAnalyzer>::fftSize);
     monoMixBuffer.resize(blockSize, 0.0f);
 }
 

@@ -37,6 +37,8 @@ int Application::run() {
     ui.setRenderModeCallback([this](RenderMode mode) { renderer.setRenderMode(mode); });
     ui.setShaderCallback([this](int shaderIndex) { renderer.setActiveShader(shaderIndex); });
     ui.setColormapCallback([this](int colormapIndex) { renderer.setActiveColormap(colormapIndex); });
+    ui.setSpectrogramScaleCallback([this](SpectrogramScale scale) { renderer.setSpectrogramScale(scale); });
+    ui.setSpectrogramGainCallback([this](float gain) { audioEngine.setSpectrogramGainDecibels(gain); });
 
     runRenderLoop();
     return 0;
@@ -113,9 +115,9 @@ void Application::runRenderLoop() {
             audioEngine.isPlaying(),
             audioEngine.getPositionSeconds(),
             audioEngine.getLengthSeconds()
-        }, renderer.getRenderMode(), renderer.shaderNames(), renderer.shaderModes(),
+        }, renderer.getRenderMode(), renderer.getSpectrogramScale(), renderer.shaderNames(), renderer.shaderModes(),
            renderer.activeShaderIndex(), renderer.colormaps(), renderer.getActiveColormapIndex());
-        renderer.render(currentAudioLevel, audioEngine.getSpectrogramBuffer());
+        renderer.render(currentAudioLevel, audioEngine.getLinearSpectrogram(), audioEngine.getMelSpectrogram());
         ui.render();
 
         renderer.swapBuffers();

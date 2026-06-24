@@ -52,9 +52,12 @@ set(INCLUDE_FILES
     include/audio/AudioEngine.h
     include/audio/SpectrogramBuffer.h
     include/audio/STFTProcessor.h
+    include/audio/MelFilterbank.h
+    include/audio/SpectrogramAnalyzer.h
     include/audio/SpectrogramExporter.h
     include/renderer/Renderer.h
     include/renderer/RenderMode.h
+    include/renderer/SpectrogramScale.h
     include/renderer/Mesh.h
     include/renderer/GridMesh.h
     include/renderer/SphereFieldMesh.h
@@ -69,7 +72,6 @@ set(SOURCE_FILES
     src/main.cpp
     src/app/Application.cpp
     src/audio/AudioEngine.cpp
-    src/audio/SpectrogramExporter.cpp
     src/renderer/Renderer.cpp
     src/renderer/Mesh.cpp
     src/renderer/GridMesh.cpp

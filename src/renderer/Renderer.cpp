@@ -11,7 +11,8 @@ Renderer::~Renderer() {
     gridMesh.reset();
     sphereMesh.reset();
     shaderLibrary.clear();
-    spectrogramTexture.reset();
+    linearSpectrogramTexture.reset();
+    melSpectrogramTexture.reset();
     glfwDestroyWindow(applicationWindow);
     glfwTerminate();
 }
@@ -76,8 +77,8 @@ bool Renderer::init() {
     gridMesh = std::make_unique<GridMesh>(512, 512, 10, 10);
     sphereMesh = std::make_unique<SphereFieldMesh>(128, 10, 10);
 
-    spectrogramTexture = std::make_unique<SpectrogramTexture>();
-    spectrogramTexture->init();
+    linearSpectrogramTexture = std::make_unique<SpectrogramTexture>();
+    melSpectrogramTexture = std::make_unique<SpectrogramTexture>();
 
     glClearColor(0.20f, 0.20f, 0.20f, 1.0f);
     std::cout << "Rendering loop avviato...\n";
@@ -85,11 +86,18 @@ bool Renderer::init() {
     return true;
 }
 
-void Renderer::render(const float currentAudioLevel, const SpectrogramBuffer& spectrogramBuffer) {
+void Renderer::render(const float currentAudioLevel,
+                      const SpectrogramBuffer& linearSpectrogram,
+                      const SpectrogramBuffer& melSpectrogram) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    spectrogramTexture->update(spectrogramBuffer);
-    spectrogramTexture->bind(0);
+    SpectrogramTexture& activeTexture =
+        (spectrogramScale == SpectrogramScale::Mel) ? *melSpectrogramTexture : *linearSpectrogramTexture;
+    const SpectrogramBuffer& activeSpectrogram =
+        (spectrogramScale == SpectrogramScale::Mel) ? melSpectrogram : linearSpectrogram;
+
+    activeTexture.update(activeSpectrogram);
+    activeTexture.bind(0);
 
     const int subW = static_cast<int>(viewportWidth  * renderFractionW);
     const int subH = static_cast<int>(viewportHeight * renderFractionH);

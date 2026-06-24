@@ -42,6 +42,17 @@ inline std::vector<Colormap> defaultColormaps() {
                 glm::vec3(0.949f, 0.425f, 0.726f),
                 glm::vec3(0.895f, 0.930f, 0.499f)
             }
+        },
+        {
+            "Viridis",
+            { 0.0f, 0.25f, 0.5f, 0.75f, 1.0f },
+            {
+                glm::vec3(0.267f, 0.005f, 0.329f),
+                glm::vec3(0.231f, 0.322f, 0.545f),
+                glm::vec3(0.128f, 0.567f, 0.551f),
+                glm::vec3(0.369f, 0.789f, 0.383f),
+                glm::vec3(0.993f, 0.906f, 0.144f)
+            }
         }
     };
 }

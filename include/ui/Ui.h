@@ -6,6 +6,7 @@
 
 #include "../renderer/Colormap.h"
 #include "../renderer/RenderMode.h"
+#include "../renderer/SpectrogramScale.h"
 
 struct GLFWwindow;
 
@@ -35,24 +36,29 @@ public:
     void setRenderModeCallback(std::function<void(RenderMode)> callback);
     void setShaderCallback(std::function<void(int)> callback);
     void setColormapCallback(std::function<void(int)> callback);
+    void setSpectrogramScaleCallback(std::function<void(SpectrogramScale)> callback);
+    void setSpectrogramGainCallback(std::function<void(float)> callback);
 
     void beginFrame();
-    void draw(const PlaybackState& state, RenderMode renderMode,
+    void draw(const PlaybackState& state, RenderMode renderMode, SpectrogramScale spectrogramScale,
               const std::vector<std::string>& shaderNames, const std::vector<RenderMode>& shaderModes,
               int shaderIndex, const std::vector<Colormap>& colormaps, int colormapIndex);
     void render();
 
 private:
     float drawPlayerPanel(const PlaybackState& state);
-    void drawShaderPanel(float topY, RenderMode renderMode,
-                         const std::vector<std::string>& shaderNames, const std::vector<RenderMode>& shaderModes,
-                         int shaderIndex, const std::vector<Colormap>& colormaps, int colormapIndex);
+    float drawShaderPanel(float topY, RenderMode renderMode,
+                          const std::vector<std::string>& shaderNames, const std::vector<RenderMode>& shaderModes,
+                          int shaderIndex, const std::vector<Colormap>& colormaps, int colormapIndex);
+    void drawSpectrogramPanel(float topY, SpectrogramScale spectrogramScale);
 
     void fileButton(bool hasTrack);
     void trackInfo(const PlaybackState& state);
     void transportControls(bool hasTrack, bool isPlaying);
 
     void renderModeSelector(RenderMode renderMode);
+    void spectrogramScaleSelector(SpectrogramScale spectrogramScale);
+    void spectrogramGainSlider();
     void shaderSelector(const std::vector<std::string>& shaderNames, const std::vector<RenderMode>& shaderModes, int shaderIndex);
     void colormapDropdown(const std::vector<Colormap>& colormaps, int colormapIndex);
 
@@ -64,4 +70,8 @@ private:
     std::function<void(RenderMode)> renderModeCallback;
     std::function<void(int)> shaderCallback;
     std::function<void(int)> colormapCallback;
+    std::function<void(SpectrogramScale)> spectrogramScaleCallback;
+    std::function<void(float)> spectrogramGainCallback;
+
+    float spectrogramGainDecibels = 0.0f;
 };

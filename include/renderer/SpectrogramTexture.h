@@ -2,7 +2,6 @@
 
 #include <glad/glad.h>
 
-#include <array>
 #include <vector>
 
 #include "../audio/SpectrogramBuffer.h"
@@ -17,8 +16,6 @@ public:
     SpectrogramTexture(SpectrogramTexture&& move) = delete;
     SpectrogramTexture& operator=(SpectrogramTexture&&) = delete;
 
-    void init();
-
     void update(const SpectrogramBuffer& spectrogramBuffer);
 
     void bind(GLuint textureUnit = 0) const;
@@ -28,11 +25,13 @@ public:
     int validFrames() const { return uploadedFrameCount; }
 
 private:
-    static constexpr int textureWidth  = SpectrogramBuffer::numFrequencyBins;
+    void create(int frequencyBinCount);
+
     static constexpr int textureHeight = SpectrogramBuffer::maxFrames;
 
+    int textureWidth = 0;
     GLuint textureId = 0;
     int uploadedFrameCount = 0;
 
-    std::vector<std::array<float, SpectrogramBuffer::numFrequencyBins>> stagingFrames;
+    std::vector<float> stagingFrames;
 };

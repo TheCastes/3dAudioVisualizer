@@ -69,6 +69,14 @@ void Ui::setShaderCallback(std::function<void(int)> callback) {
     shaderCallback = std::move(callback);
 }
 
+void Ui::setSpectrogramScaleCallback(std::function<void(SpectrogramScale)> callback) {
+    spectrogramScaleCallback = std::move(callback);
+}
+
+void Ui::setSpectrogramGainCallback(std::function<void(float)> callback) {
+    spectrogramGainCallback = std::move(callback);
+}
+
 void Ui::fileButton(bool hasTrack) {
     if (hasTrack) ImGui::BeginDisabled();
     if (ImGui::Button("Apri file...") && browseCallback)
@@ -107,11 +115,12 @@ void Ui::beginFrame() {
     ImGui::NewFrame();
 }
 
-void Ui::draw(const PlaybackState& state, RenderMode renderMode,
+void Ui::draw(const PlaybackState& state, RenderMode renderMode, SpectrogramScale spectrogramScale,
               const std::vector<std::string>& shaderNames, const std::vector<RenderMode>& shaderModes,
               int shaderIndex, const std::vector<Colormap>& colormaps, int colormapIndex) {
     const float playerBottom = drawPlayerPanel(state);
-    drawShaderPanel(playerBottom + panel.gap, renderMode, shaderNames, shaderModes, shaderIndex, colormaps, colormapIndex);
+    const float shaderBottom = drawShaderPanel(playerBottom + panel.gap, renderMode, shaderNames, shaderModes, shaderIndex, colormaps, colormapIndex);
+    drawSpectrogramPanel(shaderBottom + panel.gap, spectrogramScale);
 }
 
 float Ui::drawPlayerPanel(const PlaybackState& state) {
@@ -130,9 +139,9 @@ float Ui::drawPlayerPanel(const PlaybackState& state) {
     return bottom;
 }
 
-void Ui::drawShaderPanel(float topY, RenderMode renderMode,
-                         const std::vector<std::string>& shaderNames, const std::vector<RenderMode>& shaderModes,
-                         int shaderIndex, const std::vector<Colormap>& colormaps, int colormapIndex) {
+float Ui::drawShaderPanel(float topY, RenderMode renderMode,
+                          const std::vector<std::string>& shaderNames, const std::vector<RenderMode>& shaderModes,
+                          int shaderIndex, const std::vector<Colormap>& colormaps, int colormapIndex) {
     ImGui::SetNextWindowPos(ImVec2(panel.x, topY), ImGuiCond_Always);
     ImGui::SetNextWindowSize(ImVec2(panel.width, 0.0f), ImGuiCond_Always);
 
@@ -144,6 +153,20 @@ void Ui::drawShaderPanel(float topY, RenderMode renderMode,
     if (renderMode == RenderMode::Spherical)
         shaderSelector(shaderNames, shaderModes, shaderIndex);
 
+    const float bottom = ImGui::GetWindowPos().y + ImGui::GetWindowSize().y;
+    ImGui::End();
+    return bottom;
+}
+
+void Ui::drawSpectrogramPanel(float topY, SpectrogramScale spectrogramScale) {
+    ImGui::SetNextWindowPos(ImVec2(panel.x, topY), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(ImVec2(panel.width, 0.0f), ImGuiCond_Always);
+
+    ImGui::Begin("Spectrogram settings", nullptr, panel.flags);
+
+    spectrogramScaleSelector(spectrogramScale);
+    spectrogramGainSlider();
+
     ImGui::End();
 }
 
@@ -153,6 +176,19 @@ void Ui::renderModeSelector(RenderMode renderMode) {
     ImGui::SameLine();
     if (ImGui::RadioButton("Spherical", renderMode == RenderMode::Spherical) && renderModeCallback)
         renderModeCallback(RenderMode::Spherical);
+}
+
+void Ui::spectrogramScaleSelector(SpectrogramScale spectrogramScale) {
+    if (ImGui::RadioButton("Linear", spectrogramScale == SpectrogramScale::Linear) && spectrogramScaleCallback)
+        spectrogramScaleCallback(SpectrogramScale::Linear);
+    ImGui::SameLine();
+    if (ImGui::RadioButton("Mel", spectrogramScale == SpectrogramScale::Mel) && spectrogramScaleCallback)
+        spectrogramScaleCallback(SpectrogramScale::Mel);
+}
+
+void Ui::spectrogramGainSlider() {
+    if (ImGui::SliderFloat("Gain (dB)", &spectrogramGainDecibels, -24.0f, 24.0f, "%.1f") && spectrogramGainCallback)
+        spectrogramGainCallback(spectrogramGainDecibels);
 }
 
 void Ui::shaderSelector(const std::vector<std::string>& shaderNames, const std::vector<RenderMode>& shaderModes, int shaderIndex) {

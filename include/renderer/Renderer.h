@@ -13,6 +13,7 @@
 #include "Mesh.h"
 #include "RenderMode.h"
 #include "ShaderLibrary.h"
+#include "SpectrogramScale.h"
 #include "SpectrogramTexture.h"
 #include "Trackball.h"
 
@@ -27,13 +28,18 @@ public:
     Renderer& operator=(Renderer&&) noexcept = delete;
 
     bool init();
-    void render(float currentAudioLevel, const SpectrogramBuffer& spectrogramBuffer);
+    void render(float currentAudioLevel,
+                const SpectrogramBuffer& linearSpectrogram,
+                const SpectrogramBuffer& melSpectrogram);
 
     void swapBuffers() const;
     bool shouldClose() const;
 
     void setRenderMode(RenderMode mode);
     RenderMode getRenderMode() const;
+
+    void setSpectrogramScale(SpectrogramScale scale) { spectrogramScale = scale; }
+    SpectrogramScale getSpectrogramScale() const { return spectrogramScale; }
 
     static void glfwMouseButtonCallback(GLFWwindow *window, int button, int action, int mods);
 
@@ -72,7 +78,9 @@ private:
     ShaderLibrary shaderLibrary;
     std::unique_ptr<Mesh> gridMesh;
     std::unique_ptr<Mesh> sphereMesh;
-    std::unique_ptr<SpectrogramTexture> spectrogramTexture;
+    std::unique_ptr<SpectrogramTexture> linearSpectrogramTexture;
+    std::unique_ptr<SpectrogramTexture> melSpectrogramTexture;
+    SpectrogramScale spectrogramScale = SpectrogramScale::Linear;
     Trackball trackball;
     bool isInitialized = false;
 

@@ -10,6 +10,7 @@ public:
     void mouseMove(float x, float y, int viewportWidth, int viewportHeight);
     void mouseUp();
     void scroll(float delta);
+    void reset();
 
     glm::mat4 rotationMatrix() const;
     void applyRotation(float angleDegrees, const glm::vec3& axis);

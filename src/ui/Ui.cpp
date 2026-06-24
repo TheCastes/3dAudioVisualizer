@@ -77,6 +77,14 @@ void Ui::setSpectrogramGainCallback(std::function<void(float)> callback) {
     spectrogramGainCallback = std::move(callback);
 }
 
+void Ui::setResetRotationCallback(std::function<void()> callback) {
+    resetRotationCallback = std::move(callback);
+}
+
+void Ui::setResetParametersCallback(std::function<void()> callback) {
+    resetParametersCallback = std::move(callback);
+}
+
 void Ui::fileButton(bool hasTrack) {
     if (hasTrack) ImGui::BeginDisabled();
     if (ImGui::Button("Open file...") && browseCallback)
@@ -230,6 +238,12 @@ void Ui::shaderParametersSection(RenderMode renderMode, const ShaderControls& sh
         ImGui::SliderFloat("Base radius", &parameters.baseRadius, 0.0f, 0.2f, "%.3f");
         ImGui::SliderFloat("Radius scale", &parameters.radiusScale, 0.0f, 0.5f, "%.3f");
     }
+    ImGui::Separator();
+    if (ImGui::Button("Reset rotation") && resetRotationCallback)
+        resetRotationCallback();
+    ImGui::SameLine();
+    if (ImGui::Button("Reset parameters") && resetParametersCallback)
+        resetParametersCallback();
 }
 
 void Ui::render() {

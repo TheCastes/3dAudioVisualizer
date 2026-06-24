@@ -39,6 +39,8 @@ int Application::run() {
     ui.setColormapCallback([this](int colormapIndex) { renderer.setActiveColormap(colormapIndex); });
     ui.setSpectrogramScaleCallback([this](SpectrogramScale scale) { renderer.setSpectrogramScale(scale); });
     ui.setSpectrogramGainCallback([this](float gain) { audioEngine.setSpectrogramGainDecibels(gain); });
+    ui.setResetRotationCallback([this]() { renderer.resetRotation(); });
+    ui.setResetParametersCallback([this]() { renderer.resetParameters(); });
 
     runRenderLoop();
     return 0;

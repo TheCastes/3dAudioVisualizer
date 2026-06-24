@@ -65,6 +65,9 @@ public:
 
     ShaderParameters& parameters() { return shaderParameters; }
 
+    void resetRotation() { trackball.reset(); }
+    void resetParameters() { shaderParameters = ShaderParameters{}; }
+
     ShaderControls shaderControls() {
         return { shaderLibrary.names(), shaderLibrary.modes(), shaderLibrary.activeIndex(),
                  colormapList, activeColormapIndex, shaderParameters };

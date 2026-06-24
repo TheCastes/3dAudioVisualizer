@@ -59,3 +59,8 @@ void Trackball::scroll(const float delta) {
     zoom *= std::pow(0.9f, delta);
     zoom = std::clamp(zoom, 0.1f, 10.0f);
 }
+
+void Trackball::reset() {
+    currentRotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
+    zoom = 1.0f;
+}

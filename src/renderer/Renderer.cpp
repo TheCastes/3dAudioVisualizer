@@ -71,9 +71,15 @@ bool Renderer::init() {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    shaderLibrary.add("Displacement Heatmap", "../assets/shaders/displacement.vert", "../assets/shaders/heatmap.frag", RenderMode::Scientific);
-    shaderLibrary.add("Sphere Height", "../assets/shaders/sphere_height.vert", "../assets/shaders/sphere.frag", RenderMode::Spherical);
-    shaderLibrary.add("Sphere Radius", "../assets/shaders/sphere_radius.vert", "../assets/shaders/sphere.frag", RenderMode::Spherical);
+#ifdef ASSETS_DIR
+    const std::string shaderDir = std::string(ASSETS_DIR) + "/shaders/";
+#else
+    const std::string shaderDir = "../assets/shaders/";
+#endif
+
+    shaderLibrary.add("Displacement Heatmap", (shaderDir + "displacement.vert").c_str(), (shaderDir + "heatmap.frag").c_str(), RenderMode::Scientific);
+    shaderLibrary.add("Sphere Height", (shaderDir + "sphere_height.vert").c_str(), (shaderDir + "sphere.frag").c_str(), RenderMode::Spherical);
+    shaderLibrary.add("Sphere Radius", (shaderDir + "sphere_radius.vert").c_str(), (shaderDir + "sphere.frag").c_str(), RenderMode::Spherical);
 
     gridMesh = std::make_unique<GridMesh>(512, 512, 7, 7);
     sphereMesh = std::make_unique<SphereFieldMesh>(shaderParameters.sphereGridSize, 7, 7);

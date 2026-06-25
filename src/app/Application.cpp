@@ -31,20 +31,9 @@ int Application::run() {
         return -1;
     }
 
-    ui.setBrowseCallback([this]() { openFileDialog(); });
-    ui.setPlayPauseCallback([this]() { audioEngine.togglePlayback(); });
-    ui.setStopCallback([this]() { audioEngine.eject(); });
-    ui.setRenderModeCallback([this](RenderMode mode) { renderer.setRenderMode(mode); });
-    ui.setShaderCallback([this](int shaderIndex) { renderer.setActiveShader(shaderIndex); });
-    ui.setColormapCallback([this](int colormapIndex) { renderer.setActiveColormap(colormapIndex); });
-    ui.setSpectrogramScaleCallback([this](SpectrogramScale scale) { renderer.setSpectrogramScale(scale); });
-    ui.setSpectrogramGainCallback([this](float gain) { audioEngine.setSpectrogramGainDecibels(gain); });
-    ui.setResetRotationCallback([this]() { renderer.resetRotation(); });
-    ui.setResetParametersCallback([this]() { renderer.resetParameters(); });
-    ui.setPresetIsometricCallback([this]() { renderer.setPresetIsometric(); });
-    ui.setPresetSpectrumCallback([this]() { renderer.setPresetSpectrum(); });
-
+    runUiCallbacks();
     runRenderLoop();
+
     return 0;
 }
 
@@ -62,7 +51,7 @@ void Application::openFileDialog() {
         fileChooser->launchAsync(flags, [this](const juce::FileChooser& chooser) {
             const juce::File file = chooser.getResult();
             if (file.existsAsFile())
-                audioEngine.requestLoad(file.getFullPathName().toStdString());
+                audioEngine.load(file.getFullPathName().toStdString());
         });
     });
 }
@@ -107,7 +96,7 @@ void Application::waitUntilAudioIsReady() {
 
 void Application::runRenderLoop() {
     while (!renderer.shouldClose()) {
-        glfwPollEvents();
+        renderer.pollEvents();
 
         ui.beginFrame();
         ui.draw({
@@ -122,4 +111,19 @@ void Application::runRenderLoop() {
 
         renderer.swapBuffers();
     }
+}
+
+void Application::runUiCallbacks() {
+    ui.setBrowseCallback([this]() { openFileDialog(); });
+    ui.setPlayPauseCallback([this]() { audioEngine.togglePlayback(); });
+    ui.setEjectCallback([this]() { audioEngine.eject(); });
+    ui.setRenderModeCallback([this](RenderMode mode) { renderer.setRenderMode(mode); });
+    ui.setShaderCallback([this](int shaderIndex) { renderer.setActiveShader(shaderIndex); });
+    ui.setColormapCallback([this](int colormapIndex) { renderer.setActiveColormap(colormapIndex); });
+    ui.setSpectrogramScaleCallback([this](SpectrogramScale scale) { renderer.setSpectrogramScale(scale); });
+    ui.setSpectrogramGainCallback([this](float gain) { audioEngine.setSpectrogramGainDecibels(gain); });
+    ui.setResetRotationCallback([this]() { renderer.resetRotation(); });
+    ui.setResetParametersCallback([this]() { renderer.resetParameters(); });
+    ui.setPresetIsometricCallback([this]() { renderer.setPresetIsometric(); });
+    ui.setPresetSpectrumCallback([this]() { renderer.setPresetSpectrum(); });
 }

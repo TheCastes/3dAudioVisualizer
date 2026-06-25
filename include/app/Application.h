@@ -29,6 +29,8 @@ private:
     void openFileDialog();
     void runRenderLoop();
 
+    void runUiCallbacks();
+
     Renderer renderer;
     Ui ui;
     AudioEngine audioEngine;

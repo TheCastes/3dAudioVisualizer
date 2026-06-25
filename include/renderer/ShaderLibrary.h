@@ -27,8 +27,6 @@ public:
     const std::vector<std::string>& getNames() const { return shaderNames; }
     const std::vector<RenderMode>& getModes() const { return shaderModes; }
 
-    RenderMode getModeOf(int index) const { return shaderModes[index]; }
-
     int firstIndexForMode(RenderMode mode) const {
         for (int i = 0; i < getCount(); ++i)
             if (shaderModes[i] == mode) return i;

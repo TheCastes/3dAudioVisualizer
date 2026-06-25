@@ -23,7 +23,7 @@ public:
     AudioEngine(AudioEngine&& move) = delete;
     AudioEngine& operator=(AudioEngine&&) = delete;
 
-    void requestLoad(const std::string& path);
+    void load(const std::string& path);
 
     void togglePlayback();
     void eject();
@@ -34,7 +34,6 @@ public:
 
     std::string getCurrentTrackName() const;
 
-    bool isAudioReady() const;
     void setAudioReady();
     bool waitUntilReady(std::chrono::milliseconds timeout);
 
@@ -68,7 +67,7 @@ private:
 
     static constexpr int melBandCount = 128;
 
-    SpectrogramAnalyzer spectrogramAnalyzer{ STFTProcessor<SpectrogramAnalyzer>::numFrequencyBins, melBandCount };
+    SpectrogramAnalyzer spectrogramAnalyzer{ STFTParameters::numFrequencyBins, melBandCount };
 
     STFTProcessor<SpectrogramAnalyzer> stftProcessor{ spectrogramAnalyzer };
     std::vector<float> monoMixBuffer;

@@ -23,13 +23,15 @@ public:
     }
 
     void pushFrame(const float* linearMagnitude) {
+        const float gain = gainDecibels.load(std::memory_order_relaxed);
+
         for (int bin = 0; bin < frequencyBinCount; ++bin)
-            normalizedLinearFrame[bin] = magnitudeToNormalizedDecibels(linearMagnitude[bin]);
+            normalizedLinearFrame[bin] = magnitudeToNormalizedLevel(linearMagnitude[bin], gain);
         linearSpectrogram.pushFrame(normalizedLinearFrame.data());
 
         melFilterbank.apply(linearMagnitude, melBandFrame.data());
         for (int band = 0; band < melBandCount; ++band)
-            melBandFrame[band] = magnitudeToNormalizedDecibels(melBandFrame[band]);
+            melBandFrame[band] = magnitudeToNormalizedLevel(melBandFrame[band], gain);
         melSpectrogram.pushFrame(melBandFrame.data());
     }
 
@@ -54,9 +56,8 @@ private:
     static constexpr float minimumDecibels = -80.0f;
     static constexpr float maximumDecibels =   0.0f;
 
-    float magnitudeToNormalizedDecibels(float magnitude) const {
-        const float decibels = 20.0f * std::log10(std::max(magnitude, 1e-6f))
-                             + gainDecibels.load(std::memory_order_relaxed);
+    static float magnitudeToNormalizedLevel(float magnitude, float gain) {
+        const float decibels = 20.0f * std::log10(std::max(magnitude, 1e-6f)) + gain;
         return std::clamp((decibels - minimumDecibels) / (maximumDecibels - minimumDecibels), 0.0f, 1.0f);
     }
 

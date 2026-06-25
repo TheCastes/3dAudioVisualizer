@@ -9,7 +9,7 @@ class GridMesh : public Mesh {
 public:
     GridMesh(int columns, int rows, int width, int depth) noexcept;
 
-    void Draw() override;
+    void draw() override;
 
 private:
     // data structure for vertices

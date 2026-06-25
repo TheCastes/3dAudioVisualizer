@@ -1,8 +1,13 @@
+#define GLFW_INCLUDE_NONE
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+
 #include <iostream>
 
 #include "renderer/Renderer.h"
 #include "renderer/GridMesh.h"
 #include "renderer/SphereFieldMesh.h"
+#include "renderer/SpectrogramTexture.h"
 
 Renderer::Renderer() = default;
 
@@ -93,13 +98,14 @@ bool Renderer::init() {
     return true;
 }
 
-void Renderer::render(const SpectrogramBuffer& linearSpectrogram, const SpectrogramBuffer& melSpectrogram) {
+void Renderer::clearWindowBackground() {
     glViewport(0, 0, viewportWidth, viewportHeight);
 
     glClearColor(0.08f, 0.08f, 0.15f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
 
-    // sub-viewport
+void Renderer::beginSubViewport() {
     const int subWidth = static_cast<int>(viewportWidth  * renderFractionW);
     const int subHeight = static_cast<int>(viewportHeight * renderFractionH);
 
@@ -109,6 +115,22 @@ void Renderer::render(const SpectrogramBuffer& linearSpectrogram, const Spectrog
 
     glClearColor(0.04f, 0.04f, 0.05f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+void Renderer::endSubViewport() {
+    glDisable(GL_SCISSOR_TEST);
+}
+
+void Renderer::refreshSphereMeshIfNeeded() {
+    if (shaderParameters.sphereGridSize != previousSphereGridSize) {
+        sphereMesh = std::make_unique<SphereFieldMesh>(shaderParameters.sphereGridSize, 7, 7);
+        previousSphereGridSize = shaderParameters.sphereGridSize;
+    }
+}
+
+void Renderer::render(const SpectrogramBuffer& linearSpectrogram, const SpectrogramBuffer& melSpectrogram) {
+    clearWindowBackground();
+    beginSubViewport();
 
     SpectrogramTexture& activeTexture =
         (spectrogramScale == SpectrogramScale::Mel) ? *melSpectrogramTexture : *linearSpectrogramTexture;
@@ -137,10 +159,7 @@ void Renderer::render(const SpectrogramBuffer& linearSpectrogram, const Spectrog
     shader.set("viewMatrix", viewMatrix * glm::scale(glm::mat4(1.0f), glm::vec3(trackball.getZoom())));
 
     if (renderMode == RenderMode::Spherical) {
-        if (shaderParameters.sphereGridSize != previousSphereGridSize) {
-            sphereMesh = std::make_unique<SphereFieldMesh>(shaderParameters.sphereGridSize, 7, 7);
-            previousSphereGridSize = shaderParameters.sphereGridSize;
-        }
+        refreshSphereMeshIfNeeded();
         shader.set("heightScale", shaderParameters.heightScale);
         shader.set("baseRadius", shaderParameters.baseRadius);
         shader.set("radiusScale", shaderParameters.radiusScale);
@@ -149,9 +168,13 @@ void Renderer::render(const SpectrogramBuffer& linearSpectrogram, const Spectrog
     Mesh& activeMesh = (renderMode == RenderMode::Scientific) ? *gridMesh : *sphereMesh;
     activeMesh.modelMatrix = trackball.getRotationMatrix();
     shader.set("modelMatrix", activeMesh.modelMatrix);
-    activeMesh.Draw();
+    activeMesh.draw();
 
-    glDisable(GL_SCISSOR_TEST);
+    endSubViewport();
+}
+
+void Renderer::pollEvents() const {
+    glfwPollEvents();
 }
 
 void Renderer::swapBuffers() const {

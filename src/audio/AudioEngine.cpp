@@ -27,7 +27,7 @@ bool AudioEngine::loadFile(const std::string& path) {
     return true;
 }
 
-void AudioEngine::requestLoad(const std::string& path) {
+void AudioEngine::load(const std::string& path) {
     juce::MessageManager::callAsync([this, path]() {
         if (loadFile(path)) {
             transportSource.setPosition(0.0);
@@ -75,10 +75,6 @@ std::string AudioEngine::getCurrentTrackName() const {
     return currentTrackName;
 }
 
-bool AudioEngine::isAudioReady() const {
-    return audioReadyFlag.load(std::memory_order_acquire);
-}
-
 void AudioEngine::setAudioReady() {
     {
         std::lock_guard<std::mutex> lock(audioReadyMutex);
@@ -113,7 +109,7 @@ void AudioEngine::audioDeviceAboutToStart(juce::AudioIODevice* device) {
     currentSampleRate = device->getCurrentSampleRate();
     const int blockSize = device->getCurrentBufferSizeSamples();
     transportSource.prepareToPlay(blockSize, currentSampleRate);
-    spectrogramAnalyzer.prepare(currentSampleRate, STFTProcessor<SpectrogramAnalyzer>::fftSize);
+    spectrogramAnalyzer.prepare(currentSampleRate, STFTParameters::fftSize);
     monoMixBuffer.resize(blockSize, 0.0f);
 }
 
@@ -132,18 +128,10 @@ void AudioEngine::audioDeviceIOCallbackWithContext(const float* const*, int, flo
     juce::AudioSourceChannelInfo info(&buffer, 0, numSamples);
     transportSource.getNextAudioBlock(info);
 
-    // RMS level
-    float sumOfSquares = 0.0f;
     const int numChannels = buffer.getNumChannels();
 
-    for (int channel = 0; channel < numChannels; ++channel) {
-        const float* channelData = buffer.getReadPointer(channel);
-        for (int sample = 0; sample < numSamples; ++sample)
-            sumOfSquares += channelData[sample] * channelData[sample];
-    }
-
     // Downmix to mono and feed the STFT
-    if (monoMixBuffer.size() < numSamples)
+    if (monoMixBuffer.size() < static_cast<std::size_t>(numSamples))
         monoMixBuffer.resize(numSamples, 0.0f);
 
     const float channelScale = numChannels > 0 ? 1.0f / numChannels : 1.0f;

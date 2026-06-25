@@ -10,7 +10,7 @@ public:
     SphereFieldMesh(int cellsPerSide, int width, int depth) noexcept;
     ~SphereFieldMesh() noexcept override;
 
-    void Draw() override;
+    void draw() override;
 
 private:
     struct Instance {

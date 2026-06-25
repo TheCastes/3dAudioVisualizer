@@ -21,7 +21,7 @@ SphereFieldMesh::~SphereFieldMesh() noexcept {
         glDeleteBuffers(1, &this->instanceVBO);
 }
 
-void SphereFieldMesh::Draw() {
+void SphereFieldMesh::draw() {
     glBindVertexArray(this->VAO);
     glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, static_cast<GLsizei>(this->instances.size()));
     glBindVertexArray(0);

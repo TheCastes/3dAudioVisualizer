@@ -1,20 +1,21 @@
 #pragma once
-
 #include <juce_dsp/juce_dsp.h>
 #include <algorithm>
 #include <cmath>
 
-template<typename Sink>
-class STFTProcessor {
-public:
+struct STFTParameters {
     static constexpr int fftOrder = 10;
-    static constexpr int fftSize  = 1 << fftOrder; // 1024
-    static constexpr int hopSize  = fftSize / 2;   // 512 (50% overlap)
-    static constexpr int numFrequencyBins  = fftSize / 2;   // 512 (positive freqs)
+    static constexpr int fftSize = 1 << fftOrder; // 1024
+    static constexpr int hopSize = fftSize / 2;   // 512 (50% overlap)
+    static constexpr int numFrequencyBins = fftSize / 2;   // 512 (positive freqs)
+};
 
+template<typename Sink>
+class STFTProcessor : STFTParameters {
+public:
     explicit STFTProcessor(Sink& sink) : fft(fftOrder), spectrogramSink(sink) {
         for (int i = 0; i < fftSize; ++i)
-            hannWindow[i] = 0.5f * (1.0f - std::cos(2.0f * float(M_PI) * i / (fftSize - 1)));
+            hannWindow[i] = 0.5f * (1.0f - std::cos(juce::MathConstants<float>::twoPi * i / (fftSize - 1)));
     }
 
     void reset() {
@@ -40,7 +41,7 @@ private:
     float inputRingBuffer[fftSize]{};
     float fftWorkBuffer[fftSize * 2]{};
     float hannWindow[fftSize]{};
-    int ringWritePosition  = 0;
+    int ringWritePosition = 0;
     int samplesSinceLastHop = 0;
 
     void processFrame() {

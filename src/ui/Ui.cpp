@@ -1,6 +1,8 @@
 #include "ui/Ui.h"
 #include "ui/Theme.h"
 
+#include "renderer/ShaderControls.h"
+
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
@@ -54,8 +56,8 @@ void Ui::setPlayPauseCallback(std::function<void()> callback) {
     playPauseCallback = std::move(callback);
 }
 
-void Ui::setStopCallback(std::function<void()> callback) {
-    stopCallback = std::move(callback);
+void Ui::setEjectCallback(std::function<void()> callback) {
+    ejectCallback = std::move(callback);
 }
 
 void Ui::setRenderModeCallback(std::function<void(RenderMode)> callback) {
@@ -121,8 +123,8 @@ void Ui::transportControls(bool hasTrack, bool isPlaying) {
     if (ImGui::Button(isPlaying ? "Pause" : "Play") && playPauseCallback)
         playPauseCallback();
     ImGui::SameLine();
-    if (ImGui::Button("Stop") && stopCallback)
-        stopCallback();
+    if (ImGui::Button("Eject") && ejectCallback)
+        ejectCallback();
     if (!hasTrack) ImGui::EndDisabled();
 }
 
@@ -265,3 +267,4 @@ void Ui::render() {
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
+

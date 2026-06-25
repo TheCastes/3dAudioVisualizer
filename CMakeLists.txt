@@ -7,7 +7,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_program(CCACHE_PROGRAM ccache)
 if(CCACHE_PROGRAM)
-    set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+    set(CMAKE_C_COMPILER_LAUNCHER   "${CCACHE_PROGRAM}")
     set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
     message(STATUS "Using ccache: ${CCACHE_PROGRAM}")
 endif()
@@ -26,40 +26,33 @@ endif()
 
 if(MSVC)
     add_compile_options(/utf-8 /EHsc /MP)
-    add_compile_definitions(
-        NOMINMAX
-        WIN32_LEAN_AND_MEAN
-        _USE_MATH_DEFINES
-        _CRT_SECURE_NO_WARNINGS
-    )
+    add_compile_definitions(NOMINMAX WIN32_LEAN_AND_MEAN _USE_MATH_DEFINES _CRT_SECURE_NO_WARNINGS)
 endif()
 
 include(FetchContent)
-FetchContent_Declare(
-    juce
+
+FetchContent_Declare(juce
     GIT_REPOSITORY https://github.com/juce-framework/JUCE.git
     GIT_TAG 8.0.0
     GIT_SHALLOW TRUE
     GIT_SUBMODULES ""
 )
-FetchContent_MakeAvailable(juce)
 
-FetchContent_Declare(
-    imgui
+FetchContent_Declare(imgui
     GIT_REPOSITORY https://github.com/ocornut/imgui.git
     GIT_TAG v1.91.5
     GIT_SHALLOW TRUE
 )
-FetchContent_MakeAvailable(imgui)
+
+FetchContent_MakeAvailable(juce imgui)
 
 find_package(glfw3 QUIET)
 if(NOT glfw3_FOUND)
-    message(STATUS "glfw3 not found on system: building it via FetchContent")
+    message(STATUS "glfw3 not found on system: fetching via FetchContent")
     set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
     set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
     set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-    FetchContent_Declare(
-        glfw
+    FetchContent_Declare(glfw
         GIT_REPOSITORY https://github.com/glfw/glfw.git
         GIT_TAG 3.4
         GIT_SHALLOW TRUE
@@ -69,9 +62,8 @@ endif()
 
 find_package(glm QUIET)
 if(NOT glm_FOUND)
-    message(STATUS "glm not found on system: fetching it via FetchContent")
-    FetchContent_Declare(
-        glm
+    message(STATUS "glm not found on system: fetching via FetchContent")
+    FetchContent_Declare(glm
         GIT_REPOSITORY https://github.com/g-truc/glm.git
         GIT_TAG 1.0.1
         GIT_SHALLOW TRUE
@@ -99,14 +91,14 @@ target_include_directories(imgui PUBLIC
 )
 target_link_libraries(imgui PUBLIC glfw OpenGL::GL)
 
-file(GLOB_RECURSE INCLUDE_FILES CONFIGURE_DEPENDS
+file(GLOB_RECURSE HEADER_FILES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/include/app/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/include/audio/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/include/renderer/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/include/ui/*.h"
 )
 
-set(SOURCE_FILES
+add_executable(3dAudioVisualizer
     src/main.cpp
     src/app/Application.cpp
     src/audio/AudioEngine.cpp
@@ -117,32 +109,28 @@ set(SOURCE_FILES
     src/renderer/SpectrogramTexture.cpp
     src/renderer/Trackball.cpp
     src/ui/Ui.cpp
-)
-
-add_executable(3dAudioVisualizer
-    ${SOURCE_FILES}
-    ${INCLUDE_FILES}
+    ${HEADER_FILES}
 )
 
 target_include_directories(3dAudioVisualizer PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+target_compile_definitions(3dAudioVisualizer PRIVATE
+    JUCE_WEB_BROWSER=0
+    JUCE_USE_CURL=0
+    JUCE_USE_MP3AUDIOFORMAT=1
+    JUCE_DSP_USE_VDSP=0
+)
 
 if(WIN32)
     target_compile_definitions(3dAudioVisualizer PRIVATE
         ASSETS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/assets")
 endif()
 
-add_compile_definitions(
-    JUCE_USE_CURL=0
-    JUCE_USE_MP3AUDIOFORMAT=1
-    JUCE_DSP_USE_VDSP=0
-)
-
 target_link_libraries(3dAudioVisualizer PRIVATE
     juce::juce_audio_devices
     juce::juce_audio_formats
     juce::juce_dsp
     juce::juce_gui_basics
-    juce::juce_core
     glfw
     glm::glm
     glad

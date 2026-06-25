@@ -6,11 +6,10 @@
 
 #include "renderer/Colormap.h"
 #include "renderer/RenderMode.h"
-#include "renderer/ShaderControls.h"
-#include "renderer/ShaderParameters.h"
 #include "renderer/SpectrogramScale.h"
 
 struct GLFWwindow;
+struct ShaderControls;
 
 
 class Ui {
@@ -34,7 +33,7 @@ public:
 
     void setBrowseCallback(std::function<void()> callback);
     void setPlayPauseCallback(std::function<void()> callback);
-    void setStopCallback(std::function<void()> callback);
+    void setEjectCallback(std::function<void()> callback);
     void setRenderModeCallback(std::function<void(RenderMode)> callback);
     void setShaderCallback(std::function<void(int)> callback);
     void setColormapCallback(std::function<void(int)> callback);
@@ -65,11 +64,12 @@ private:
     void shaderSelector(const std::vector<std::string>& shaderNames, const std::vector<RenderMode>& shaderModes, int shaderIndex);
     void colormapDropdown(const std::vector<Colormap>& colormaps, int colormapIndex);
     void shaderParametersSection(RenderMode renderMode, const ShaderControls& shaderControls);
+
     bool initialized = false;
 
     std::function<void()> browseCallback;
     std::function<void()> playPauseCallback;
-    std::function<void()> stopCallback;
+    std::function<void()> ejectCallback;
     std::function<void(RenderMode)> renderModeCallback;
     std::function<void(int)> shaderCallback;
     std::function<void(int)> colormapCallback;

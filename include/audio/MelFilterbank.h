@@ -18,15 +18,15 @@ public:
 
         std::vector<float> bandEdgeBins(melBandCount + 2);
         for (int edgeIndex = 0; edgeIndex < melBandCount + 2; ++edgeIndex) {
-            const float mel   = lowestMel + (highestMel - lowestMel) * edgeIndex / (melBandCount + 1);
+            const float mel = lowestMel + (highestMel - lowestMel) * edgeIndex / (melBandCount + 1);
             const float hertz = melToHertz(mel);
             bandEdgeBins[edgeIndex] = hertz * fftSize / static_cast<float>(sampleRate);
         }
 
         for (int band = 0; band < melBandCount; ++band) {
-            const float leftBin   = bandEdgeBins[band];
+            const float leftBin = bandEdgeBins[band];
             const float centerBin = bandEdgeBins[band + 1];
-            const float rightBin  = bandEdgeBins[band + 2];
+            const float rightBin = bandEdgeBins[band + 2];
             float* bandWeights = &filterWeights[static_cast<std::size_t>(band) * frequencyBinCount];
 
             float weightSum = 0.0f;
@@ -60,7 +60,7 @@ public:
 
 private:
     static float hertzToMel(float hertz) { return 2595.0f * std::log10(1.0f + hertz / 700.0f); }
-    static float melToHertz(float mel)   { return 700.0f * (std::pow(10.0f, mel / 2595.0f) - 1.0f); }
+    static float melToHertz(float mel) { return 700.0f * (std::pow(10.0f, mel / 2595.0f) - 1.0f); }
 
     int frequencyBinCount = 0;
     int melBandCount = 0;

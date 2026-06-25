@@ -1,5 +1,5 @@
 #pragma once
-
+#include <glad/glad.h>
 #include <glm/glm.hpp>
 
 class Mesh {
@@ -14,7 +14,7 @@ public:
     Mesh(Mesh&& move) = delete;
     Mesh& operator=(Mesh&& move) = delete;
 
-    virtual void Draw() = 0;
+    virtual void draw() = 0;
 
 protected:
     GLuint VAO = 0, VBO = 0, EBO = 0;

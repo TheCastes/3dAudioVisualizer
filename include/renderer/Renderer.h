@@ -1,23 +1,20 @@
 #pragma once
 
-#define GLFW_INCLUDE_NONE
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-
-#include <array>
 #include <memory>
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
 #include "Colormap.h"
-#include "Mesh.h"
 #include "RenderMode.h"
 #include "ShaderControls.h"
 #include "ShaderLibrary.h"
 #include "ShaderParameters.h"
 #include "SpectrogramScale.h"
-#include "SpectrogramTexture.h"
 #include "Trackball.h"
+
+struct GLFWwindow;
+class Mesh;
+class SpectrogramTexture;
+class SpectrogramBuffer;
 
 class Renderer {
 public:
@@ -32,6 +29,7 @@ public:
     bool init();
     void render(const SpectrogramBuffer& linearSpectrogram, const SpectrogramBuffer& melSpectrogram);
 
+    void pollEvents() const;
     void swapBuffers() const;
     bool shouldClose() const;
 
@@ -52,15 +50,11 @@ public:
     GLFWwindow* getWindow() const { return applicationWindow; }
 
     void setActiveShader(int index) { shaderLibrary.setActive(index); }
-    int getActiveShaderIndex() const { return shaderLibrary.getActiveIndex(); }
-    const std::vector<std::string>& getShaderNames() const { return shaderLibrary.getNames(); }
-    const std::vector<RenderMode>& getShaderModes() const { return shaderLibrary.getModes(); }
 
-    void setActiveColormap(int index) { activeColormapIndex = index; }
-    int getActiveColormapIndex() const { return activeColormapIndex; }
-    const std::vector<Colormap>& getColormaps() const { return colormapList; }
-
-    ShaderParameters& getParameters() { return shaderParameters; }
+    void setActiveColormap(int index) {
+        if (index >= 0 && index < static_cast<int>(colormapList.size()))
+            activeColormapIndex = index;
+    }
 
     void resetRotation() { trackball.reset(); }
     void resetParameters() { shaderParameters = ShaderParameters{}; }
@@ -93,6 +87,11 @@ private:
     int viewportHeight = 0;
 
     bool cursorToSubViewport(double x, double y, float& localX, float& localY, int& subWidth, int& subHeight) const;
+
+    void clearWindowBackground();
+    void beginSubViewport();
+    void endSubViewport();
+    void refreshSphereMeshIfNeeded();
 
     glm::mat4 viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 10.0f), glm::vec3(0.0f, 0.0f, -10.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 

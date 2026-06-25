@@ -128,6 +128,11 @@ add_executable(3dAudioVisualizer
     ${INCLUDE_FILES}
 )
 
+if(WIN32)
+    target_compile_definitions(3dAudioVisualizer PRIVATE
+        ASSETS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/assets")
+endif()
+
 add_compile_definitions(
     JUCE_USE_CURL=0
     JUCE_USE_MP3AUDIOFORMAT=1

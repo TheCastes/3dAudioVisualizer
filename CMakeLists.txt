@@ -1,9 +1,32 @@
 cmake_minimum_required(VERSION 3.20)
 project(3dAudioVisualizer LANGUAGES C CXX)
 
+if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
+    message(FATAL_ERROR "Build in-source not enabled: make a separate build /folder and build inside it")
+endif()
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+find_program(CCACHE_PROGRAM ccache)
+if(CCACHE_PROGRAM)
+    set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+    set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+    message(STATUS "Using ccache: ${CCACHE_PROGRAM}")
+endif()
+
+if(NOT MSVC)
+    find_program(MOLD_PROGRAM mold)
+    find_program(LLD_PROGRAM ld.lld)
+    if(MOLD_PROGRAM)
+        add_link_options(-fuse-ld=mold)
+        message(STATUS "Using linker: mold")
+    elseif(LLD_PROGRAM)
+        add_link_options(-fuse-ld=lld)
+        message(STATUS "Using linker: lld")
+    endif()
+endif()
 
 include(FetchContent)
 FetchContent_Declare(
@@ -23,16 +46,39 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(imgui)
 
-find_package(glfw3 REQUIRED)
-find_package(glm REQUIRED)
+find_package(glfw3 QUIET)
+if(NOT glfw3_FOUND)
+    message(STATUS "glfw3 not found on system: building it via FetchContent")
+    set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    FetchContent_Declare(
+        glfw
+        GIT_REPOSITORY https://github.com/glfw/glfw.git
+        GIT_TAG 3.4
+        GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(glfw)
+endif()
+
+find_package(glm QUIET)
+if(NOT glm_FOUND)
+    message(STATUS "glm not found on system: fetching it via FetchContent")
+    FetchContent_Declare(
+        glm
+        GIT_REPOSITORY https://github.com/g-truc/glm.git
+        GIT_TAG 1.0.1
+        GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(glm)
+endif()
+
 find_package(OpenGL REQUIRED)
 
 add_library(glad STATIC include/glad/src/glad.c)
 target_include_directories(glad PUBLIC include/glad/include)
 target_link_libraries(glad PRIVATE ${CMAKE_DL_LIBS})
 
-# Dear ImGui has no official CMake target: build a static lib from core
-# sources plus the GLFW + OpenGL3 backends.
 add_library(imgui STATIC
     ${imgui_SOURCE_DIR}/imgui.cpp
     ${imgui_SOURCE_DIR}/imgui_draw.cpp
@@ -47,25 +93,11 @@ target_include_directories(imgui PUBLIC
 )
 target_link_libraries(imgui PUBLIC glfw OpenGL::GL)
 
-set(INCLUDE_FILES
-    include/app/Application.h
-    include/audio/AudioEngine.h
-    include/audio/SpectrogramBuffer.h
-    include/audio/STFTProcessor.h
-    include/audio/MelFilterbank.h
-    include/audio/SpectrogramAnalyzer.h
-    include/audio/SpectrogramExporter.h
-    include/renderer/Renderer.h
-    include/renderer/RenderMode.h
-    include/renderer/SpectrogramScale.h
-    include/renderer/Mesh.h
-    include/renderer/GridMesh.h
-    include/renderer/SphereFieldMesh.h
-    include/renderer/Shader.h
-    include/renderer/ShaderLibrary.h
-    include/renderer/SpectrogramTexture.h
-    include/renderer/Trackball.h
-    include/ui/Ui.h
+file(GLOB_RECURSE INCLUDE_FILES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/app/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/audio/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/renderer/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/include/ui/*.h"
 )
 
 set(SOURCE_FILES

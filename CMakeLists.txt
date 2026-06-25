@@ -28,6 +28,16 @@ if(NOT MSVC)
     endif()
 endif()
 
+if(MSVC)
+    add_compile_options(/utf-8 /EHsc /MP)
+    add_compile_definitions(
+        NOMINMAX
+        WIN32_LEAN_AND_MEAN
+        _USE_MATH_DEFINES
+        _CRT_SECURE_NO_WARNINGS
+    )
+endif()
+
 include(FetchContent)
 FetchContent_Declare(
     juce

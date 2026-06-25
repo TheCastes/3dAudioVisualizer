@@ -7,7 +7,7 @@
 
 class SphereFieldMesh : public Mesh {
 public:
-    SphereFieldMesh(int n, int width, int depth) noexcept;
+    SphereFieldMesh(int cellsPerSide, int width, int depth) noexcept;
     ~SphereFieldMesh() noexcept override;
 
     void Draw() override;
@@ -21,6 +21,6 @@ private:
     std::vector<Instance> instances;
     GLuint instanceVBO = 0;
 
-    void generateField(int n, int width, int depth);
+    void generateField(int cellsPerSide, int width, int depth);
     void setupMesh();
 };

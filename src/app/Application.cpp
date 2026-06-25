@@ -1,12 +1,12 @@
 #include <juce_core/juce_core.h>
+#include <juce_events/juce_events.h>
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <chrono>
 #include <iostream>
 #include <string>
 
-#include "../../include/app/Application.h"
+#include "app/Application.h"
 
-#include "juce_events/juce_events.h"
 Application::Application() = default;
 
 Application::~Application() {
@@ -22,12 +22,12 @@ int Application::run() {
     waitUntilAudioIsReady();
 
     if (!renderer.init()) {
-        std::cerr << "Renderer init fallito\n";
+        std::cerr << "Renderer init failed\n";
         return -1;
     }
 
     if (!ui.init(renderer.getWindow())) {
-        std::cerr << "UI init fallito\n";
+        std::cerr << "UI init failed\n";
         return -1;
     }
 
@@ -52,7 +52,7 @@ int Application::run() {
 void Application::openFileDialog() {
     juce::MessageManager::callAsync([this]() {
         fileChooser = std::make_unique<juce::FileChooser>(
-            "Seleziona una traccia",
+            "Select a track",
             juce::File(),
             "*.wav;*.mp3;*.flac;*.m4a;*.ogg;*.aiff");
 
@@ -85,7 +85,7 @@ void Application::startJuceAudioThread() {
         deviceManager.restartLastAudioDevice();
         
         audioEngine.setAudioReady();
-        std::cout << "JUCE Audio inizializzato\n";
+        std::cout << "JUCE Audio initialized\n";
         juce::MessageManager::getInstance()->runDispatchLoop();
 
         }
@@ -108,10 +108,6 @@ void Application::waitUntilAudioIsReady() {
 void Application::runRenderLoop() {
     while (!renderer.shouldClose()) {
         glfwPollEvents();
-        currentFrame = glfwGetTime();
-        deltaTime = currentFrame - lastFrame;
-        lastFrame = currentFrame;
-        const float currentAudioLevel = audioEngine.getCurrentAudioLevel();
 
         ui.beginFrame();
         ui.draw({
@@ -119,8 +115,9 @@ void Application::runRenderLoop() {
             audioEngine.isPlaying(),
             audioEngine.getPositionSeconds(),
             audioEngine.getLengthSeconds()
-        }, renderer.getRenderMode(), renderer.getSpectrogramScale(), renderer.shaderControls());
-        renderer.render(currentAudioLevel, audioEngine.getLinearSpectrogram(), audioEngine.getMelSpectrogram());
+        }, renderer.getRenderMode(), renderer.getSpectrogramScale(), renderer.getShaderControls());
+
+        renderer.render(audioEngine.getLinearSpectrogram(), audioEngine.getMelSpectrogram());
         ui.render();
 
         renderer.swapBuffers();

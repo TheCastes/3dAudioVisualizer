@@ -1,6 +1,6 @@
 #include <glad/glad.h>
 
-#include "../../include/renderer/SphereFieldMesh.h"
+#include "renderer/SphereFieldMesh.h"
 
 namespace {
     constexpr float quadCorners[] = {
@@ -11,8 +11,8 @@ namespace {
     };
 }
 
-SphereFieldMesh::SphereFieldMesh(int n, int width, int depth) noexcept {
-    generateField(n, width, depth);
+SphereFieldMesh::SphereFieldMesh(int cellsPerSide, int width, int depth) noexcept {
+    generateField(cellsPerSide, width, depth);
     this->setupMesh();
 }
 
@@ -23,24 +23,24 @@ SphereFieldMesh::~SphereFieldMesh() noexcept {
 
 void SphereFieldMesh::Draw() {
     glBindVertexArray(this->VAO);
-    glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, this->instances.size());
+    glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, static_cast<GLsizei>(this->instances.size()));
     glBindVertexArray(0);
 }
 
-void SphereFieldMesh::generateField(int n, int width, int depth) {
-    instances.reserve(n * n);
-    for (int row = 0; row < n; ++row) {
-        for (int col = 0; col < n; ++col) {
-            Instance inst;
-            float u = (col + 0.5f) / n;
-            float v = (row + 0.5f) / n;
-            inst.center = {
+void SphereFieldMesh::generateField(int cellsPerSide, int width, int depth) {
+    instances.reserve(cellsPerSide * cellsPerSide);
+    for (int row = 0; row < cellsPerSide; ++row) {
+        for (int col = 0; col < cellsPerSide; ++col) {
+            Instance instance;
+            float u = (col + 0.5f) / cellsPerSide;
+            float v = (row + 0.5f) / cellsPerSide;
+            instance.center = {
                 (u - 0.5f) * width,
                 (v - 0.5f) * depth,
                 0.0f
             };
-            inst.uv = { u, v };
-            instances.push_back(inst);
+            instance.uv = { u, v };
+            instances.push_back(instance);
         }
     }
 }

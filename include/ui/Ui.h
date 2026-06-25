@@ -4,11 +4,11 @@
 #include <string>
 #include <vector>
 
-#include "../renderer/Colormap.h"
-#include "../renderer/RenderMode.h"
-#include "../renderer/ShaderControls.h"
-#include "../renderer/ShaderParameters.h"
-#include "../renderer/SpectrogramScale.h"
+#include "renderer/Colormap.h"
+#include "renderer/RenderMode.h"
+#include "renderer/ShaderControls.h"
+#include "renderer/ShaderParameters.h"
+#include "renderer/SpectrogramScale.h"
 
 struct GLFWwindow;
 

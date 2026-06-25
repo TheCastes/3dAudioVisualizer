@@ -15,22 +15,22 @@ public:
         shaders.push_back(std::make_unique<Shader>(vertexPath, fragmentPath));
     }
 
-    Shader& active() { return *shaders[activeShaderIndex]; }
+    Shader& getActiveShader() { return *shaders[activeShaderIndex]; }
 
     void setActive(int index) {
-        if (index >= 0 && index < count())
+        if (index >= 0 && index < getCount())
             activeShaderIndex = index;
     }
 
-    int activeIndex() const { return activeShaderIndex; }
-    int count() const { return static_cast<int>(shaders.size()); }
-    const std::vector<std::string>& names() const { return shaderNames; }
-    const std::vector<RenderMode>& modes() const { return shaderModes; }
+    int getActiveIndex() const { return activeShaderIndex; }
+    int getCount() const { return static_cast<int>(shaders.size()); }
+    const std::vector<std::string>& getNames() const { return shaderNames; }
+    const std::vector<RenderMode>& getModes() const { return shaderModes; }
 
-    RenderMode modeOf(int index) const { return shaderModes[index]; }
+    RenderMode getModeOf(int index) const { return shaderModes[index]; }
 
     int firstIndexForMode(RenderMode mode) const {
-        for (int i = 0; i < count(); ++i)
+        for (int i = 0; i < getCount(); ++i)
             if (shaderModes[i] == mode) return i;
         return 0;
     }

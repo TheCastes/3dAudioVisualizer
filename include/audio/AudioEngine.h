@@ -23,12 +23,8 @@ public:
     AudioEngine(AudioEngine&& move) = delete;
     AudioEngine& operator=(AudioEngine&&) = delete;
 
-    bool loadFile(const std::string& path);
-    
     void requestLoad(const std::string& path);
 
-    void play();
-    void stop();
     void togglePlayback();
     void eject();
     bool isPlaying() const;
@@ -37,8 +33,6 @@ public:
     double getLengthSeconds() const;
 
     std::string getCurrentTrackName() const;
-
-    float getCurrentAudioLevel() const;
 
     bool isAudioReady() const;
     void setAudioReady();
@@ -57,6 +51,8 @@ public:
         int numSamples, const juce::AudioIODeviceCallbackContext&) override;
 
 private:
+    bool loadFile(const std::string& path);
+
     double currentSampleRate = 44100.0;
 
     juce::AudioFormatManager formatManager;
@@ -66,7 +62,6 @@ private:
     mutable std::mutex trackNameMutex;
     std::string currentTrackName;
 
-    std::atomic<float> currentAudioLevel{0.0f};
     std::atomic<bool> audioReadyFlag{false};
     std::mutex audioReadyMutex;
     std::condition_variable audioReadyCondition;

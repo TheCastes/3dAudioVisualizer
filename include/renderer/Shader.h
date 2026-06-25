@@ -57,12 +57,12 @@ public:
         checkCompileErrors(fragment, "FRAGMENT");
 
         // Step 3: Shader Program creation
-        this->Program = glCreateProgram();
-        glAttachShader(this->Program, vertex);
-        glAttachShader(this->Program, fragment);
-        glLinkProgram(this->Program);
+        this->program = glCreateProgram();
+        glAttachShader(this->program, vertex);
+        glAttachShader(this->program, fragment);
+        glLinkProgram(this->program);
         // check linking errors
-        checkCompileErrors(this->Program, "PROGRAM");
+        checkCompileErrors(this->program, "PROGRAM");
 
         // Step 4: we delete the shaders because they are linked to the Shader Program, and we do not need them anymore
         glDeleteShader(vertex);
@@ -71,58 +71,58 @@ public:
 
 
     ~Shader() {
-        glDeleteProgram(this->Program);
+        glDeleteProgram(this->program);
     }
 
     Shader(const Shader& copy) = delete;
     Shader& operator=(const Shader&) = delete;
 
-	void Use() {
-		glUseProgram(this->Program);
-	}
+    void use() {
+        glUseProgram(this->program);
+    }
 
     void set(const std::string& name, int value) {
-		glUniform1i(location(name), value);
-	}
+        glUniform1i(location(name), value);
+    }
     void set(const std::string& name, float value) {
-		glUniform1f(location(name), value);
-	}
+        glUniform1f(location(name), value);
+    }
     void set(const std::string& name, const glm::mat4& value) {
-		glUniformMatrix4fv(location(name), 1, GL_FALSE, glm::value_ptr(value));
-	}
+        glUniformMatrix4fv(location(name), 1, GL_FALSE, glm::value_ptr(value));
+    }
     void set(const std::string& name, const float* values, int count) {
-		glUniform1fv(location(name), count, values);
-	}
+        glUniform1fv(location(name), count, values);
+    }
     void set(const std::string& name, const glm::vec3* values, int count) {
-		glUniform3fv(location(name), count, glm::value_ptr(values[0]));
-	}
+        glUniform3fv(location(name), count, glm::value_ptr(values[0]));
+    }
 
 private:
-    GLuint Program;
+    GLuint program = 0;
 
     GLint location(const std::string& name) {
-        return glGetUniformLocation(Program, name.c_str());
+        return glGetUniformLocation(program, name.c_str());
     }
 
 
 
     // Check compilation and linking errors
     void checkCompileErrors(GLuint shader, std::string type) {
-		GLint success;
-		GLchar infoLog[1024];
-		if(type != "PROGRAM") {
-			glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-			if(!success) {
-				glGetShaderInfoLog(shader, 1024, NULL, infoLog);
+        GLint success;
+        GLchar infoLog[1024];
+        if(type != "PROGRAM") {
+            glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+            if(!success) {
+                glGetShaderInfoLog(shader, 1024, NULL, infoLog);
                 std::cout << "| ERROR::::SHADER-COMPILATION-ERROR of type: " << type << "|\n" << infoLog << "\n| -- --------------------------------------------------- -- |\n";
-			}
-		}
-		else {
-			glGetProgramiv(shader, GL_LINK_STATUS, &success);
-			if(!success) {
-				glGetProgramInfoLog(shader, 1024, NULL, infoLog);
+            }
+        }
+        else {
+            glGetProgramiv(shader, GL_LINK_STATUS, &success);
+            if(!success) {
+                glGetProgramInfoLog(shader, 1024, NULL, infoLog);
                 std::cout << "| ERROR::::PROGRAM-LINKING-ERROR of type: " << type << "|\n" << infoLog << "\n| -- --------------------------------------------------- -- |\n";
-			}
-		}
-	}
+            }
+        }
+    }
 };

@@ -13,7 +13,7 @@ uniform int temporalWindow;
 uniform float temporalSigma;
 uniform int freqSampleSize;
 
-out vec4 texel;
+out float magnitude;
 
 void main() {
     float binCount = float(textureSize(spectrogram, 0).x);
@@ -25,22 +25,20 @@ void main() {
     int halfFreq = freqSampleSize / 2;
     float weightedSum = 0.0;
     float weightSum = 0.0;
-    for (int ti = 0; ti < temporalWindow; ++ti) {
-        float wt = exp(-float(ti * ti) / (2.0 * temporalSigma * temporalSigma));
-        float row = mod(float(writeCursor) - 1.0 - (baseAge + float(ti)) + ringSize, ringSize);
-        float t_coord = (row + 0.5) / ringSize;
-        for (int fi = -halfFreq; fi < freqSampleSize - halfFreq; ++fi) {
-            float fbin = clamp(baseFreq + float(fi), 0.0, binCount - 1.0);
-            float freq = (fbin + 0.5) / binCount;
-            weightedSum += texture(spectrogram, vec2(freq, t_coord)).r * wt;
-            weightSum += wt;
+    for (int timeStep = 0; timeStep < temporalWindow; ++timeStep) {
+        float weight = exp(-float(timeStep * timeStep) / (2.0 * temporalSigma * temporalSigma));
+        float row = mod(float(writeCursor) - 1.0 - (baseAge + float(timeStep)) + ringSize, ringSize);
+        float timeCoord = (row + 0.5) / ringSize;
+        for (int freqStep = -halfFreq; freqStep < freqSampleSize - halfFreq; ++freqStep) {
+            float frequencyBin = clamp(baseFreq + float(freqStep), 0.0, binCount - 1.0);
+            float freqCoord = (frequencyBin + 0.5) / binCount;
+            weightedSum += texture(spectrogram, vec2(freqCoord, timeCoord)).r * weight;
+            weightSum += weight;
         }
     }
-    texel = vec4(weightedSum / weightSum, 0.0, 0.0, 1.0);
+    magnitude = weightedSum / weightSum;
 
-    float scale = 0.7;
+    vec3 displacement = vec3(0.0, 0.0, magnitude);
 
-    vec3 displacement = vec3(0,0,(texel.r));
-
-    gl_Position =  projectionMatrix * viewMatrix * modelMatrix * vec4((position * scale)+(displacement), 1.0f);
+    gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position + displacement, 1.0);
 }

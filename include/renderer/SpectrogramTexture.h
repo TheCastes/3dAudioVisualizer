@@ -2,7 +2,7 @@
 
 #include <glad/glad.h>
 
-#include "../audio/SpectrogramBuffer.h"
+#include "audio/SpectrogramBuffer.h"
 
 class SpectrogramTexture {
 public:
@@ -18,7 +18,7 @@ public:
 
     void bind(GLuint textureUnit = 0) const;
 
-    GLuint id() const { return textureId; }
+    GLuint getId() const { return textureId; }
 
     int getWriteCursor() const { return writeCursor; }
     int getValidFrameCount() const { return validFrameCount; }

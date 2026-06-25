@@ -1,5 +1,5 @@
-#include "../../include/ui/Ui.h"
-#include "../../include/ui/Theme.h"
+#include "ui/Ui.h"
+#include "ui/Theme.h"
 
 #include <imgui.h>
 #include <backends/imgui_impl_glfw.h>

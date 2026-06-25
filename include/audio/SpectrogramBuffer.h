@@ -24,26 +24,6 @@ public:
         totalFramesWritten.store(writeIndex + 1, std::memory_order_release);
     }
 
-    int getSnapshot(float* destinationFrames, int requestedFrameCount) const {
-        const uint64_t writeIndexSnapshot = totalFramesWritten.load(std::memory_order_acquire);
-        const int framesAvailable = static_cast<int>(std::min<uint64_t>(writeIndexSnapshot, maxFrames));
-        const int framesToCopy = std::min(framesAvailable, requestedFrameCount);
-
-        if (framesToCopy <= 0) {
-            return 0;
-        }
-        const uint64_t firstFrameAbsoluteIndex = writeIndexSnapshot - framesToCopy;
-
-        for (int i = 0; i < framesToCopy; ++i) {
-            const int sourceSlot = static_cast<int>((firstFrameAbsoluteIndex + i) % maxFrames);
-            const float* sourceRow = &frameStorage[static_cast<std::size_t>(sourceSlot) * numBins];
-            std::copy(sourceRow, sourceRow + numBins,
-                      destinationFrames + static_cast<std::size_t>(i) * numBins);
-        }
-
-        return framesToCopy;
-    }
-
     void clear() {
         totalFramesWritten.store(0, std::memory_order_release);
     }
@@ -54,11 +34,6 @@ public:
             pushFrame(zeros.data());
     }
 
-    int totalFrames() const {
-        const uint64_t writeIndexSnapshot = totalFramesWritten.load(std::memory_order_acquire);
-        return static_cast<int>(std::min<uint64_t>(writeIndexSnapshot, maxFrames));
-    }
-
     const float* getSlotData(int slot) const {
         return &frameStorage[static_cast<std::size_t>(slot) * numBins];
     }
@@ -67,7 +42,7 @@ public:
         return totalFramesWritten.load(std::memory_order_acquire);
     }
 
-    int numFrequencyBins() const { return numBins; }
+    int getNumFrequencyBins() const { return numBins; }
 
 private:
     int numBins;

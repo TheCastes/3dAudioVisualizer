@@ -1,6 +1,6 @@
 #include <glad/glad.h>
 
-#include "../../include/renderer/Mesh.h"
+#include "renderer/Mesh.h"
 
 Mesh::~Mesh() noexcept {
     freeGPUresources();

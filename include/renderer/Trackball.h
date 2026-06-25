@@ -12,7 +12,7 @@ public:
     void scroll(float delta);
     void reset();
 
-    glm::mat4 rotationMatrix() const;
+    glm::mat4 getRotationMatrix() const;
     void applyRotation(float angleDegrees, const glm::vec3& axis);
 
     float getZoom() const { return zoom; }

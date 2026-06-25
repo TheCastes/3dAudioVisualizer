@@ -1,4 +1,4 @@
-#include "../../include/renderer/SpectrogramTexture.h"
+#include "renderer/SpectrogramTexture.h"
 
 #include <algorithm>
 #include <cstdint>
@@ -28,7 +28,7 @@ void SpectrogramTexture::create(int frequencyBinCount) {
 
 void SpectrogramTexture::update(const SpectrogramBuffer& spectrogramBuffer) {
     if (textureId == 0) {
-        create(spectrogramBuffer.numFrequencyBins());
+        create(spectrogramBuffer.getNumFrequencyBins());
     }
 
     const uint64_t writeIndex = spectrogramBuffer.getWriteIndex();

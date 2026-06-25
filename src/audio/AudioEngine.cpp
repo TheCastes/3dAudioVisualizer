@@ -1,9 +1,8 @@
-#include "../../include/audio/AudioEngine.h"
+#include "audio/AudioEngine.h"
 #include <cmath>
 
 AudioEngine::AudioEngine() {
     formatManager.registerBasicFormats();
-    formatManager.registerFormat(new juce::MP3AudioFormat(), true);
 }
 
 AudioEngine::~AudioEngine() {
@@ -32,17 +31,11 @@ void AudioEngine::requestLoad(const std::string& path) {
     juce::MessageManager::callAsync([this, path]() {
         if (loadFile(path)) {
             transportSource.setPosition(0.0);
-            play();
+            transportSource.start();
         }
     });
 }
 
-void AudioEngine::play() {
-    transportSource.start();
-}
-void AudioEngine::stop() {
-    transportSource.stop();
-}
 void AudioEngine::togglePlayback() {
     juce::MessageManager::callAsync([this]() {
         if (readerSource == nullptr) return;
@@ -80,10 +73,6 @@ double AudioEngine::getLengthSeconds() const {
 std::string AudioEngine::getCurrentTrackName() const {
     std::lock_guard<std::mutex> lock(trackNameMutex);
     return currentTrackName;
-}
-
-float AudioEngine::getCurrentAudioLevel() const {
-    return currentAudioLevel.load(std::memory_order_relaxed);
 }
 
 bool AudioEngine::isAudioReady() const {
@@ -137,7 +126,6 @@ void AudioEngine::audioDeviceIOCallbackWithContext(const float* const*, int, flo
     
     if (!transportSource.isPlaying()) {
         buffer.clear();
-        currentAudioLevel.store(0.0f, std::memory_order_relaxed);
         return;
     }
 
@@ -153,11 +141,6 @@ void AudioEngine::audioDeviceIOCallbackWithContext(const float* const*, int, flo
         for (int sample = 0; sample < numSamples; ++sample)
             sumOfSquares += channelData[sample] * channelData[sample];
     }
-
-    const int totalSampleCount = numSamples * numChannels;
-    const float rmsLevel = totalSampleCount > 0 ? std::sqrt(sumOfSquares / totalSampleCount) : 0.0f;
-
-    currentAudioLevel.store( rmsLevel, std::memory_order_relaxed );
 
     // Downmix to mono and feed the STFT
     if (monoMixBuffer.size() < numSamples)

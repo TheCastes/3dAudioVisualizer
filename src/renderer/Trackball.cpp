@@ -1,6 +1,6 @@
 #define GLM_ENABLE_EXPERIMENTAL
 
-#include "../../include/renderer/Trackball.h"
+#include "renderer/Trackball.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <algorithm>
@@ -46,7 +46,7 @@ void Trackball::mouseUp() {
     dragging = false;
 }
 
-glm::mat4 Trackball::rotationMatrix() const {
+glm::mat4 Trackball::getRotationMatrix() const {
     return glm::toMat4(currentRotation);
 }
 

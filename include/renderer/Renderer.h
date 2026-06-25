@@ -30,9 +30,7 @@ public:
     Renderer& operator=(Renderer&&) noexcept = delete;
 
     bool init();
-    void render(float currentAudioLevel,
-                const SpectrogramBuffer& linearSpectrogram,
-                const SpectrogramBuffer& melSpectrogram);
+    void render(const SpectrogramBuffer& linearSpectrogram, const SpectrogramBuffer& melSpectrogram);
 
     void swapBuffers() const;
     bool shouldClose() const;
@@ -54,16 +52,15 @@ public:
     GLFWwindow* getWindow() const { return applicationWindow; }
 
     void setActiveShader(int index) { shaderLibrary.setActive(index); }
-    int activeShaderIndex() const { return shaderLibrary.activeIndex(); }
-    const std::vector<std::string>& shaderNames() const { return shaderLibrary.names(); }
-    const std::vector<RenderMode>& shaderModes() const { return shaderLibrary.modes(); }
+    int getActiveShaderIndex() const { return shaderLibrary.getActiveIndex(); }
+    const std::vector<std::string>& getShaderNames() const { return shaderLibrary.getNames(); }
+    const std::vector<RenderMode>& getShaderModes() const { return shaderLibrary.getModes(); }
 
     void setActiveColormap(int index) { activeColormapIndex = index; }
     int getActiveColormapIndex() const { return activeColormapIndex; }
-    const std::vector<Colormap>& colormaps() const { return colormapList; }
-    void addColormap(Colormap cm);
+    const std::vector<Colormap>& getColormaps() const { return colormapList; }
 
-    ShaderParameters& parameters() { return shaderParameters; }
+    ShaderParameters& getParameters() { return shaderParameters; }
 
     void resetRotation() { trackball.reset(); }
     void resetParameters() { shaderParameters = ShaderParameters{}; }
@@ -78,13 +75,14 @@ public:
         trackball.applyRotation(-90.0f, glm::vec3(0.0f, 0.0f, 1.0f));
     }
 
-    ShaderControls shaderControls() {
-        return { shaderLibrary.names(), shaderLibrary.modes(), shaderLibrary.activeIndex(),
+    ShaderControls getShaderControls() {
+        return { shaderLibrary.getNames(), shaderLibrary.getModes(), shaderLibrary.getActiveIndex(),
                  colormapList, activeColormapIndex, shaderParameters };
     }
 
-    glm::mat4 projectionMatrix = glm::mat4(1.0f);
 private:
+    glm::mat4 projectionMatrix = glm::mat4(1.0f);
+
     const int screenWidth = 1280;
     const int screenHeight = 720;
 
@@ -94,7 +92,7 @@ private:
     int viewportWidth = 0;
     int viewportHeight = 0;
 
-    bool cursorToSubViewport(double x, double y, float& localX, float& localY, int& subW, int& subH) const;
+    bool cursorToSubViewport(double x, double y, float& localX, float& localY, int& subWidth, int& subHeight) const;
 
     glm::mat4 viewMatrix = glm::lookAt(glm::vec3(0.0f, 0.0f, 10.0f), glm::vec3(0.0f, 0.0f, -10.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
@@ -112,5 +110,5 @@ private:
     int activeColormapIndex = 0;
     RenderMode renderMode = RenderMode::Scientific;
     ShaderParameters shaderParameters;
-    int previousSphereGridSize = 70;
+    int previousSphereGridSize = -1;
 };

@@ -5,7 +5,7 @@ out vec4 color;
 in vec2 localPos;
 flat in vec3 centerView;
 flat in float radiusView;
-flat in float mag;
+flat in float magnitude;
 
 uniform mat4 projectionMatrix;
 
@@ -27,10 +27,10 @@ vec3 colormap(float normalizedValue) {
 }
 
 void main() {
-    float r2 = dot(localPos, localPos);
-    if (r2 > 1.0 || mag <= 0.0001) discard;
+    float distanceSquared = dot(localPos, localPos);
+    if (distanceSquared > 1.0 || magnitude <= 0.0001) discard;
 
-    float z = sqrt(1.0 - r2);
+    float z = sqrt(1.0 - distanceSquared);
     vec3 normal = vec3(localPos, z);
     vec3 viewPos = centerView + radiusView * normal;
 
@@ -40,5 +40,5 @@ void main() {
     const vec3 lightDir = normalize(vec3(-0.4, 0.6, 0.8));
     float lambert = 0.2 + 0.8 * max(dot(normal, lightDir), 0.0);
 
-    color = vec4(colormap(mag) * lambert, 1.0);
+    color = vec4(colormap(magnitude) * lambert, 1.0);
 }

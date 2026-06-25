@@ -4,9 +4,9 @@
 #include <string>
 #include <thread>
 
-#include "../audio/AudioEngine.h"
-#include "../renderer/Renderer.h"
-#include "../ui/Ui.h"
+#include "audio/AudioEngine.h"
+#include "renderer/Renderer.h"
+#include "ui/Ui.h"
 
 namespace juce { class FileChooser; }
 
@@ -34,8 +34,4 @@ private:
     AudioEngine audioEngine;
     std::thread juceAudioThread;
     std::unique_ptr<juce::FileChooser> fileChooser;
-
-    float deltaTime = 0.0f;
-    float lastFrame = 0.0f;
-    float currentFrame = 0.0;
 };

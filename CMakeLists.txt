@@ -1,10 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 project(3dAudioVisualizer LANGUAGES C CXX)
 
-if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
-    message(FATAL_ERROR "Build in-source not enabled: make a separate build /folder and build inside it")
-endif()
-
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -127,6 +123,8 @@ add_executable(3dAudioVisualizer
     ${SOURCE_FILES}
     ${INCLUDE_FILES}
 )
+
+target_include_directories(3dAudioVisualizer PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 if(WIN32)
     target_compile_definitions(3dAudioVisualizer PRIVATE

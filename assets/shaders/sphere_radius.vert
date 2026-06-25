@@ -18,7 +18,7 @@ uniform int freqSampleSize;
 out vec2 localPos;
 flat out vec3 centerView;
 flat out float radiusView;
-flat out float mag;
+flat out float magnitude;
 
 void main() {
     float binCount = float(textureSize(spectrogram, 0).x);
@@ -30,26 +30,26 @@ void main() {
     int halfFreq = freqSampleSize / 2;
     float weightedSum = 0.0;
     float weightSum = 0.0;
-    for (int ti = 0; ti < temporalWindow; ++ti) {
-        float wt = exp(-float(ti * ti) / (2.0 * temporalSigma * temporalSigma));
-        float row = mod(float(writeCursor) - 1.0 - (baseAge + float(ti)) + ringSize, ringSize);
-        float t_coord = (row + 0.5) / ringSize;
-        for (int fi = -halfFreq; fi < freqSampleSize - halfFreq; ++fi) {
-            float fbin = clamp(baseFreq + float(fi), 0.0, binCount - 1.0);
-            float freq = (fbin + 0.5) / binCount;
-            weightedSum += texture(spectrogram, vec2(freq, t_coord)).r * wt;
-            weightSum += wt;
+    for (int timeStep = 0; timeStep < temporalWindow; ++timeStep) {
+        float weight = exp(-float(timeStep * timeStep) / (2.0 * temporalSigma * temporalSigma));
+        float row = mod(float(writeCursor) - 1.0 - (baseAge + float(timeStep)) + ringSize, ringSize);
+        float timeCoord = (row + 0.5) / ringSize;
+        for (int freqStep = -halfFreq; freqStep < freqSampleSize - halfFreq; ++freqStep) {
+            float frequencyBin = clamp(baseFreq + float(freqStep), 0.0, binCount - 1.0);
+            float freqCoord = (frequencyBin + 0.5) / binCount;
+            weightedSum += texture(spectrogram, vec2(freqCoord, timeCoord)).r * weight;
+            weightSum += weight;
         }
     }
-    mag = weightedSum / weightSum;
+    magnitude = weightedSum / weightSum;
 
     vec3 worldCenter = center;
-    float r = pow(mag, 1.2) * radiusScale;
+    float radius = pow(magnitude, 1.2) * radiusScale;
 
     centerView = (viewMatrix * modelMatrix * vec4(worldCenter, 1.0)).xyz;
-    radiusView = r;
+    radiusView = radius;
 
     localPos = corner * 2.0;
-    vec3 cornerView = centerView + vec3(localPos * r, 0.0);
+    vec3 cornerView = centerView + vec3(localPos * radius, 0.0);
     gl_Position = projectionMatrix * vec4(cornerView, 1.0);
 }

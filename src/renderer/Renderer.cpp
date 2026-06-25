@@ -1,8 +1,8 @@
 #include <iostream>
 
-#include "../../include/renderer/Renderer.h"
-#include "../../include/renderer/GridMesh.h"
-#include "../../include/renderer/SphereFieldMesh.h"
+#include "renderer/Renderer.h"
+#include "renderer/GridMesh.h"
+#include "renderer/SphereFieldMesh.h"
 
 Renderer::Renderer() = default;
 
@@ -19,7 +19,7 @@ Renderer::~Renderer() {
 
 bool Renderer::init() {
     if (!glfwInit()) {
-        std::cerr << "GLFW init fallito\n";
+        std::cerr << "GLFW init failed\n";
         return false;
     }
 
@@ -29,14 +29,14 @@ bool Renderer::init() {
 
     applicationWindow = glfwCreateWindow(screenWidth, screenHeight, "3dAudioVisualizer", nullptr, nullptr);
     if (!applicationWindow) {
-        std::cerr << "Creazione finestra fallita\n";
+        std::cerr << "Window creation failed\n";
         return false;
     }
 
     glfwMakeContextCurrent(applicationWindow);
 
     if (!gladLoadGL()) {
-        std::cerr << "GLAD inizializzazione fallita\n";
+        std::cerr << "GLAD initialization failed\n";
         glfwDestroyWindow(applicationWindow);
         applicationWindow = nullptr;
         glfwTerminate();
@@ -88,27 +88,24 @@ bool Renderer::init() {
     linearSpectrogramTexture = std::make_unique<SpectrogramTexture>();
     melSpectrogramTexture = std::make_unique<SpectrogramTexture>();
 
-    glClearColor(0.08f, 0.08f, 0.15f, 1.0f);
-    std::cout << "Rendering loop avviato...\n";
+    std::cout << "Rendering loop started...\n";
     isInitialized = true;
     return true;
 }
 
-void Renderer::render(const float currentAudioLevel,
-                      const SpectrogramBuffer& linearSpectrogram,
-                      const SpectrogramBuffer& melSpectrogram) {
+void Renderer::render(const SpectrogramBuffer& linearSpectrogram, const SpectrogramBuffer& melSpectrogram) {
     glViewport(0, 0, viewportWidth, viewportHeight);
 
     glClearColor(0.08f, 0.08f, 0.15f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // sub-viewport
-    const int subW = static_cast<int>(viewportWidth  * renderFractionW);
-    const int subH = static_cast<int>(viewportHeight * renderFractionH);
+    const int subWidth = static_cast<int>(viewportWidth  * renderFractionW);
+    const int subHeight = static_cast<int>(viewportHeight * renderFractionH);
 
-    glViewport(viewportWidth - subW, viewportHeight - subH, subW, subH);
+    glViewport(viewportWidth - subWidth, viewportHeight - subHeight, subWidth, subHeight);
     glEnable(GL_SCISSOR_TEST);
-    glScissor(viewportWidth - subW, viewportHeight - subH, subW, subH);
+    glScissor(viewportWidth - subWidth, viewportHeight - subHeight, subWidth, subHeight);
 
     glClearColor(0.04f, 0.04f, 0.05f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -121,8 +118,8 @@ void Renderer::render(const float currentAudioLevel,
     activeTexture.update(activeSpectrogram);
     activeTexture.bind(0);
 
-    Shader& shader = shaderLibrary.active();
-    shader.Use();
+    Shader& shader = shaderLibrary.getActiveShader();
+    shader.use();
     shader.set("spectrogram", 0);
     shader.set("writeCursor", activeTexture.getWriteCursor());
     shader.set("validFrames", activeTexture.getValidFrameCount());
@@ -131,9 +128,9 @@ void Renderer::render(const float currentAudioLevel,
     shader.set("freqSampleSize", shaderParameters.freqSampleSize);
 
     if (!colormapList.empty()) {
-        const Colormap& cm = colormapList[activeColormapIndex];
-        shader.set("colorStopPositions", cm.positions.data(), 5);
-        shader.set("colorStopColors", cm.colors.data(), 5);
+        const Colormap& colormap = colormapList[activeColormapIndex];
+        shader.set("colorStopPositions", colormap.positions.data(), 5);
+        shader.set("colorStopColors", colormap.colors.data(), 5);
     }
 
     shader.set("projectionMatrix", projectionMatrix);
@@ -141,7 +138,7 @@ void Renderer::render(const float currentAudioLevel,
 
     if (renderMode == RenderMode::Spherical) {
         if (shaderParameters.sphereGridSize != previousSphereGridSize) {
-            sphereMesh = std::make_unique<SphereFieldMesh>(shaderParameters.sphereGridSize, 10, 10);
+            sphereMesh = std::make_unique<SphereFieldMesh>(shaderParameters.sphereGridSize, 7, 7);
             previousSphereGridSize = shaderParameters.sphereGridSize;
         }
         shader.set("heightScale", shaderParameters.heightScale);
@@ -150,7 +147,7 @@ void Renderer::render(const float currentAudioLevel,
     }
 
     Mesh& activeMesh = (renderMode == RenderMode::Scientific) ? *gridMesh : *sphereMesh;
-    activeMesh.modelMatrix = trackball.rotationMatrix();
+    activeMesh.modelMatrix = trackball.getRotationMatrix();
     shader.set("modelMatrix", activeMesh.modelMatrix);
     activeMesh.Draw();
 
@@ -166,15 +163,15 @@ bool Renderer::shouldClose() const {
 }
 
 bool Renderer::cursorToSubViewport(const double x, const double y, float& localX, float& localY,
-                                   int& subW, int& subH) const {
-    int winW, winH;
-    glfwGetWindowSize(applicationWindow, &winW, &winH);
-    subW = static_cast<int>(winW * renderFractionW);
-    subH = static_cast<int>(winH * renderFractionH);
-    localX = static_cast<float>(x) - static_cast<float>(winW - subW); // right aligned
+                                   int& subWidth, int& subHeight) const {
+    int windowWidth, windowHeight;
+    glfwGetWindowSize(applicationWindow, &windowWidth, &windowHeight);
+    subWidth = static_cast<int>(windowWidth * renderFractionW);
+    subHeight = static_cast<int>(windowHeight * renderFractionH);
+    localX = static_cast<float>(x) - static_cast<float>(windowWidth - subWidth); // right aligned
     localY = static_cast<float>(y);                                   // top aligned
-    return localX >= 0.0f && localX <= static_cast<float>(subW)
-        && localY >= 0.0f && localY <= static_cast<float>(subH);
+    return localX >= 0.0f && localX <= static_cast<float>(subWidth)
+        && localY >= 0.0f && localY <= static_cast<float>(subHeight);
 }
 
 void Renderer::glfwMouseButtonCallback(GLFWwindow* window, const int button, const int action, int mods) {
@@ -184,11 +181,11 @@ void Renderer::glfwMouseButtonCallback(GLFWwindow* window, const int button, con
     glfwGetCursorPos(window, &x, &y);
 
     float localX, localY;
-    int subW, subH;
-    const bool insideViewport = self->cursorToSubViewport(x, y, localX, localY, subW, subH);
+    int subWidth, subHeight;
+    const bool insideViewport = self->cursorToSubViewport(x, y, localX, localY, subWidth, subHeight);
     
     if (action == GLFW_PRESS && insideViewport)
-        self->trackball.mouseDown(localX, localY, subW, subH);
+        self->trackball.mouseDown(localX, localY, subWidth, subHeight);
     else if (action == GLFW_RELEASE)
         self->trackball.mouseUp();
 }
@@ -196,9 +193,9 @@ void Renderer::glfwMouseButtonCallback(GLFWwindow* window, const int button, con
 void Renderer::glfwCursorPosCallback(GLFWwindow* window, const double x, const double y) {
     Renderer* self = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
     float localX, localY;
-    int subW, subH;
-    self->cursorToSubViewport(x, y, localX, localY, subW, subH);
-    self->trackball.mouseMove(localX, localY, subW, subH);
+    int subWidth, subHeight;
+    self->cursorToSubViewport(x, y, localX, localY, subWidth, subHeight);
+    self->trackball.mouseMove(localX, localY, subWidth, subHeight);
 }
 
 void Renderer::glfwKeyCallback(GLFWwindow* window, const int key, int scancode, const int action, int mods) {
@@ -219,8 +216,3 @@ void Renderer::setRenderMode(RenderMode mode) {
 RenderMode Renderer::getRenderMode() const {
     return renderMode;
 }
-
-// this might be useful to let users import their own colormaps but who cares 
-// void Renderer::addColormap(Colormap cm) {
-//     colormapList.push_back(std::move(cm));
-// }
